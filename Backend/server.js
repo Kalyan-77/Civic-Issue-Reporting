@@ -6,6 +6,10 @@ if (typeof dns.setDefaultResultOrder === 'function') {
     dns.setDefaultResultOrder('ipv4first');
 }
 
+// prevent silent crashes
+process.on('unhandledRejection', (r) => console.error('REJECTION:', r));
+process.on('uncaughtException', (e) => console.error('EXCEPTION:', e));
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

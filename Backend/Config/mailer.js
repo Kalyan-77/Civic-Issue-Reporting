@@ -8,20 +8,15 @@ const nodemailer = require('nodemailer');
  */
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS
+    port: 465,
+    secure: true, // Use SSL/TLS
     auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
     },
-    tls: {
-        rejectUnauthorized: false, // Helps with cloud networking hurdles
-        minVersion: 'TLSv1.2'
-    },
+    family: 4, // Force IPv4
     pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
-    connectionTimeout: 20000, // 20 seconds
+    connectionTimeout: 20000,
 });
 
 transporter.verify((error, success) => {
