@@ -1,4 +1,11 @@
 require('dotenv').config();
+const dns = require('dns');
+
+// Force IPv4 over IPv6
+if (typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
