@@ -80,7 +80,14 @@ const sendOtpEmail = async (email, name, otp) => {
         </html>
         `
     };
-    await transporter.sendMail(mailOptions);
+    console.log(`[MAILER] Attempting to send OTP email to ${email}`);
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`[MAILER] OTP email Sent successfully to ${email}`);
+    } catch (err) {
+        console.error('[MAILER ERROR]:', err);
+        throw err;
+    }
 };
 
 // ==================== PASSWORD GENERATOR ====================
@@ -450,8 +457,9 @@ exports.sendRegistrationOtp = async (req, res) => {
         });
 
         // Send OTP email
+        console.log(`Sending OTP to ${email.toLowerCase().trim()}...`);
         await sendOtpEmail(email.toLowerCase().trim(), name.trim(), otp);
-        //console.log(`OTP sent to ${email} (expires in 10 min)`);
+        console.log(`✅ OTP sent successfully to ${email}`);
 
         res.status(200).json({ message: 'OTP sent to your email. Please verify to complete registration.' });
 
@@ -684,7 +692,14 @@ exports.forgotPassword = async (req, res) => {
             </html>
             `
         };
-        await transporter.sendMail(mailOptions);
+        console.log(`[MAILER] Attempting to send welcome email to: ${email}`);
+        try {
+            const info = await transporter.sendMail(mailOptions);
+            console.log(`[MAILER] Welcome email sent. ID: ${info.messageId}`);
+        } catch (err) {
+            console.error('[MAILER ERROR] Welcome email failed:', err.message);
+            // Non-blocking but logged
+        }
         console.log(`Password reset OTP sent to ${email}`);
 
         res.status(200).json({ message: 'If this email exists, an OTP has been sent.' });
