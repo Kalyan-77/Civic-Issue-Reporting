@@ -24,7 +24,7 @@ const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 /** Send the OTP verification email */
 const sendOtpEmail = async (email, name, otp) => {
     const mailOptions = {
-        from: `"Civic Issue System" <${process.env.MAIL_USER}>`,
+        from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
         to: email,
         subject: '🔐 Your Email Verification OTP — Civic Issue System',
         html: `
@@ -80,14 +80,7 @@ const sendOtpEmail = async (email, name, otp) => {
         </html>
         `
     };
-    console.log(`[MAILER] Attempting to send OTP email to ${email}`);
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log(`[MAILER] OTP email Sent successfully to ${email}`);
-    } catch (err) {
-        console.error('[MAILER ERROR]:', err);
-        throw err;
-    }
+    await transporter.sendMail(mailOptions);
 };
 
 // ==================== PASSWORD GENERATOR ====================
@@ -127,7 +120,7 @@ const generateSecurePassword = () => {
  */
 const sendDeptAdminWelcomeEmail = async ({ name, email, password, department }) => {
     const mailOptions = {
-        from: `"Civic Issue System" <${process.env.MAIL_USER}>`,
+        from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
         to: email,
         subject: '🎉 Welcome to Civic Issue System — Your Admin Account is Ready',
         html: `
@@ -457,9 +450,8 @@ exports.sendRegistrationOtp = async (req, res) => {
         });
 
         // Send OTP email
-        console.log(`Sending OTP to ${email.toLowerCase().trim()}...`);
         await sendOtpEmail(email.toLowerCase().trim(), name.trim(), otp);
-        console.log(`✅ OTP sent successfully to ${email}`);
+        //console.log(`OTP sent to ${email} (expires in 10 min)`);
 
         res.status(200).json({ message: 'OTP sent to your email. Please verify to complete registration.' });
 
@@ -640,7 +632,7 @@ exports.forgotPassword = async (req, res) => {
 
         // Send OTP email
         const mailOptions = {
-            from: `"Civic Issue System" <${process.env.MAIL_USER}>`,
+            from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
             to: email.toLowerCase().trim(),
             subject: '🔑 Password Reset OTP — Civic Issue System',
             html: `
@@ -692,14 +684,7 @@ exports.forgotPassword = async (req, res) => {
             </html>
             `
         };
-        console.log(`[MAILER] Attempting to send welcome email to: ${email}`);
-        try {
-            const info = await transporter.sendMail(mailOptions);
-            console.log(`[MAILER] Welcome email sent. ID: ${info.messageId}`);
-        } catch (err) {
-            console.error('[MAILER ERROR] Welcome email failed:', err.message);
-            // Non-blocking but logged
-        }
+        await transporter.sendMail(mailOptions);
         console.log(`Password reset OTP sent to ${email}`);
 
         res.status(200).json({ message: 'If this email exists, an OTP has been sent.' });
