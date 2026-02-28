@@ -179,7 +179,7 @@ const sendDeptAdminWelcomeEmail = async ({ name, email, password, department }) 
                 </div>
               </div>
 
-              <a href="http://localhost:5173/admin/login" class="cta-btn">🚀 Login to Your Account</a>
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/login" class="cta-btn">🚀 Login to Your Account</a>
 
               <div class="warning">
                 ⚠️ <strong>Security Notice:</strong> Please change your password immediately after your first login.
