@@ -6,7 +6,7 @@ const {
     markAsRead,
     markAllAsRead,
     toggleArchive
-} = require('../controllers/ContactController');
+} = require('../Controllers/ContactController');
 const { isDeptAdmin } = require('../Middleware/authMiddleware');
 
 // @route   POST /contact/admin
