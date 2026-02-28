@@ -18,13 +18,17 @@ const { cleanupLogs } = require('./Controllers/ActivityController');
 
 const app = express();
 
+// Enable trust proxy for production deployments (Render, Vercel, etc.)
+app.set("trust proxy", 1);
+
 //Middleware
 app.use(cors({
     origin: ['http://localhost:5173', 'https://civic-issue-reporting-rho.vercel.app'], // frontend URL
     credentials: true, // Allow cookies and sessions
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
+app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -32,9 +36,12 @@ app.use(session({
     secret: 'mySecretKey', // use a strong secret key in production
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Required for secure cookies behind proxies (Render)
+    rolling: true, // Resets session expiration on every request
     cookie: {
-        httpOnly: true,   // prevents JS access to cookies
-        secure: false,    // set to true if using HTTPS
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // MUST be true for SameSite=None
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
 }));
