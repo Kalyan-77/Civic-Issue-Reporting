@@ -18,4 +18,12 @@ const transporter = nodemailer.createTransport({
     debug: true   // Include SMTP traffic in logs
 });
 
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("SMTP ERROR:", error);
+    } else {
+        console.log("SMTP READY");
+    }
+});
+
 module.exports = transporter;
