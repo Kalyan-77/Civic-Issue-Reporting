@@ -7,12 +7,9 @@ const nodemailer = require('nodemailer');
  * or use host/port/secure settings.
  */
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
-  family: 4,
+  service: 'gmail',
   auth: {
-    user: process.env.MAIL_USER,
+    user: process.env.MAIL_MY,
     pass: process.env.MAIL_PASS
   }
 });

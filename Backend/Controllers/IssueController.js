@@ -3,15 +3,54 @@ const Users = require('../Models/UserModel');
 const Notification = require('../Models/NotificationModel');
 const { createNotification } = require('./NotificationController');
 const { logActivity } = require('./ActivityController');
+const socketConfig = require('../Config/socket');
 const multer = require('multer');
 const path = require('path');
-
-
 
 const uploadMiddleware = require('../Middleware/uploadMiddleware');
 const upload = uploadMiddleware.single('image');
 
-// Controller: create issue with image
+// Maps issue category → dept_admin department name
+const CATEGORY_TO_DEPARTMENT = {
+  'Garbage': 'Garbage',
+  'Streetlight': 'Streetlight',
+  'Pothole': 'Potholes',
+  'Water Leakage': 'Water Leakage',
+  'Other': 'Other'
+};
+
+/**
+ * Picks the dept_admin in the given department who currently has the
+ * fewest non-Resolved issues assigned to them (Round-Robin / Least-Load).
+ * Returns null if no eligible admin exists.
+ */
+const getLeastLoadedAdmin = async (department) => {
+  // Find all active (non-blocked) dept_admins for this department
+  const admins = await Users.find({
+    role: 'dept_admin',
+    department,
+    isBlocked: false
+  }).select('_id name');
+
+  if (!admins.length) return null;
+
+  // Count open (Pending + In Progress) issues per admin in parallel
+  const loads = await Promise.all(
+    admins.map(async (admin) => {
+      const count = await Issue.countDocuments({
+        assignedTo: admin._id,
+        status: { $ne: 'Resolved' }
+      });
+      return { admin, count };
+    })
+  );
+
+  // Sort by load ascending; pick the lightest-loaded admin
+  loads.sort((a, b) => a.count - b.count);
+  return loads[0].admin;
+};
+
+// Controller: create issue with image + auto-assign to least-loaded dept_admin
 exports.createIssue = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -26,6 +65,13 @@ exports.createIssue = async (req, res) => {
         return res.status(400).json({ success: false, message: 'All required fields must be provided' });
       }
 
+      // Auto-assign to the least-loaded dept_admin for this category
+      const department = CATEGORY_TO_DEPARTMENT[category];
+      let assignedAdmin = null;
+      if (department) {
+        assignedAdmin = await getLeastLoadedAdmin(department);
+      }
+
       const issue = new Issue({
         title,
         description,
@@ -38,15 +84,40 @@ exports.createIssue = async (req, res) => {
           area: area || 'Unknown',
           state: state || ''
         },
-        image: req.file ? req.file.path : null
+        image: req.file ? req.file.path : null,
+        assignedTo: assignedAdmin ? assignedAdmin._id : null,
+        // Always start as Pending — auto-assigning puts it in an admin's queue,
+        // but the admin hasn't acknowledged or started work yet.
+        // The admin explicitly moves it to "In Progress" when they begin working.
+        status: 'Pending'
       });
 
       await issue.save();
 
+      // Notify the assigned admin (if any)
+      if (assignedAdmin) {
+        await createNotification(
+          assignedAdmin._id,
+          createdBy,
+          'ASSIGNMENT',
+          issue._id,
+          `A new "${category}" issue "${title}" has been assigned to you.`
+        );
+      }
+
       // Log Create Issue Activity
       logActivity(createdBy, 'CREATE_ISSUE', { issueId: issue._id, title: issue.title }, req.ip);
 
-      res.status(201).json({ success: true, message: 'Issue reported successfully', issue });
+      // Populate for response
+      await issue.populate('assignedTo', 'name email department');
+
+      res.status(201).json({
+        success: true,
+        message: assignedAdmin
+          ? `Issue reported and assigned to ${assignedAdmin.name}`
+          : 'Issue reported successfully (no admin available for auto-assignment)',
+        issue
+      });
 
     } catch (error) {
       console.error(error);
@@ -84,7 +155,6 @@ exports.getIssueById = async (req, res) => {
 };
 
 // Update issue status (Admin)
-// Update issue status (Admin)
 exports.updateIssueStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -94,13 +164,15 @@ exports.updateIssueStatus = async (req, res) => {
       updateData.resolvedAt = Date.now();
     }
 
-    const issue = await Issue.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const issue = await Issue.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .populate('createdBy', 'name email mobile location profilePicture')
+      .populate('assignedTo', 'name email department mobile location profilePicture');
     if (!issue) return res.status(404).json({ message: 'Issue not found' });
 
     // Notify the user who created the issue
     if (issue.createdBy) {
       await createNotification(
-        issue.createdBy, // Recipient
+        issue.createdBy._id || issue.createdBy, // Recipient
         req.session?.user?._id || issue.assignedTo, // Sender (optional, might be admin)
         'STATUS_UPDATE',
         issue._id,
@@ -111,6 +183,13 @@ exports.updateIssueStatus = async (req, res) => {
     // Log Update Status Activity
     if (req.session?.user) {
       logActivity(req.session.user._id || req.session.user.id, 'UPDATE_STATUS', { issueId: issue._id, status: status }, req.ip);
+    }
+
+    // Real-time update: broadcast to all connected clients watching issues
+    try {
+      socketConfig.getIo().to('issues_room').emit('issue_updated', issue);
+    } catch (socketErr) {
+      console.error('Socket emit error (updateIssueStatus):', socketErr.message);
     }
 
     res.status(200).json({ message: 'Status updated', issue });
@@ -238,13 +317,54 @@ exports.getIssuesByStatus = async (req, res) => {
 //   }
 // };
 
-// Assign issue to admin (only main admin can assign) without login check
-// Add this updated function to your IssueController.js
+/**
+ * GET /issue/admins/:department
+ * Returns all active dept_admins for a department, each with their current open-issue count.
+ * Used by the Super Admin UI when manually reassigning.
+ */
+exports.getAdminsByDepartment = async (req, res) => {
+  try {
+    // Only Super Admins may query admins by department
+    if (!req.session?.user || req.session.user.role !== 'super_admin') {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
 
-// Assign issue to admin (only super admin can assign) - UPDATED VERSION
+    const { department } = req.params;
+
+    const allowedDepartments = Object.values(CATEGORY_TO_DEPARTMENT);
+    if (!department || !allowedDepartments.includes(department)) {
+      return res.status(400).json({ success: false, message: 'Invalid department' });
+    }
+
+    const admins = await Users.find({
+      role: 'dept_admin',
+      department,
+      isBlocked: false
+    }).select('_id name email department profilePicture');
+
+    // Attach open-issue count to each admin
+    const adminsWithLoad = await Promise.all(
+      admins.map(async (admin) => {
+        const openCount = await Issue.countDocuments({
+          assignedTo: admin._id,
+          status: { $ne: 'Resolved' }
+        });
+        return { ...admin.toObject(), openIssueCount: openCount };
+      })
+    );
+
+    res.status(200).json({ success: true, admins: adminsWithLoad });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+  }
+};
+
+// Assign/Reassign issue to a specific admin (Super Admin only)
 exports.assignIssueToAdmin = async (req, res) => {
   const { issueId } = req.params;
   const { adminId } = req.body;
+  const adminIdString = adminId ? adminId.toString() : null;
 
   try {
     // Check if user is logged in via session
@@ -273,16 +393,10 @@ exports.assignIssueToAdmin = async (req, res) => {
       });
     }
 
-    // Check if the issue is already assigned
-    if (issue.assignedTo) {
-      return res.status(400).json({
-        success: false,
-        message: `This issue is already assigned to ${issue.assignedTo.name || 'an admin'}`
-      });
-    }
+    // Note: we allow reassignment (overrides previous assignment)
 
     // Check if the admin exists and is a dept_admin
-    const admin = await Users.findById(adminId);
+    const admin = await Users.findById(adminIdString);
     if (!admin || admin.role !== 'dept_admin') {
       return res.status(400).json({
         success: false,
@@ -290,16 +404,8 @@ exports.assignIssueToAdmin = async (req, res) => {
       });
     }
 
-    // Optional: Verify department matches category
-    const categoryToDepartment = {
-      'Garbage': 'Garbage',
-      'Streetlight': 'Streetlight',
-      'Pothole': 'Potholes',
-      'Water Leakage': 'Water Leakage',
-      'Other': 'Other'
-    };
-
-    const expectedDepartment = categoryToDepartment[issue.category];
+    // Verify department matches category
+    const expectedDepartment = CATEGORY_TO_DEPARTMENT[issue.category];
     if (admin.department !== expectedDepartment) {
       return res.status(400).json({
         success: false,
@@ -307,10 +413,34 @@ exports.assignIssueToAdmin = async (req, res) => {
       });
     }
 
-    // Assign the issue
-    issue.assignedTo = adminId;
-    issue.status = 'In Progress';
+    // Notify the previously assigned admin (if different)
+    const previousAdminId = issue.assignedTo ? issue.assignedTo.toString() : null;
+
+    // Assign the issue — do NOT force status to "In Progress".
+    // The receiving admin sets that themselves when they start work.
+    // If issue was previously unassigned (Pending), keep it Pending.
+    issue.assignedTo = adminIdString;
     await issue.save();
+
+    // Notify newly assigned admin
+    await createNotification(
+      adminIdString,
+      req.session.user._id || req.session.user.id,
+      'ASSIGNMENT',
+      issue._id,
+      `Issue "${issue.title}" has been assigned to you.`
+    );
+
+    // Notify previously assigned admin if different
+    if (previousAdminId && previousAdminId !== adminIdString) {
+      await createNotification(
+        previousAdminId,
+        req.session.user._id || req.session.user.id,
+        'ASSIGNMENT',
+        issue._id,
+        `Issue "${issue.title}" has been reassigned away from you.`
+      );
+    }
 
     // Populate the assignedTo field for response
     await issue.populate('assignedTo', 'name email department mobile location profilePicture');
@@ -318,6 +448,21 @@ exports.assignIssueToAdmin = async (req, res) => {
 
     // Log Assignment Activity
     logActivity(req.session.user._id || req.session.user.id, 'ASSIGN_ISSUE', { issueId: issue._id, assignedTo: adminId }, req.ip);
+
+    // Real-time update:
+    // 1. Tell the newly assigned dept admin their issues changed (they join their user room)
+    // 2. If there was a previous admin, tell them too
+    // 3. Broadcast global update to super admins watching the issues room
+    try {
+      const socketIo = socketConfig.getIo();
+      socketIo.to(adminIdString).emit('issue_assigned', issue);
+      if (previousAdminId && previousAdminId !== adminIdString) {
+        socketIo.to(previousAdminId).emit('issue_unassigned', { issueId: issue._id.toString() });
+      }
+      socketIo.to('issues_room').emit('issue_updated', issue);
+    } catch (socketErr) {
+      console.error('Socket emit error (assignIssueToAdmin):', socketErr.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -350,9 +495,7 @@ exports.getIssuesByAdmin = async (req, res) => {
       .populate('createdBy', 'name email mobile location profilePicture')
       .populate('assignedTo', 'name email department mobile location profilePicture');
 
-    if (!issues.length) {
-      return res.status(404).json({ message: "No issues assigned to this admin" });
-    }
+    // Always return 200 — empty array is a valid response (admin has no issues yet)
 
     res.status(200).json({
       success: true,

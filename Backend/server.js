@@ -3,8 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
+const compression = require('compression');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
 const connectDB = require('./Config/db');
 const userRoutes = require('./Routes/UserRoutes');
@@ -21,23 +26,70 @@ const app = express();
 // Enable trust proxy for production deployments (Render, Vercel, etc.)
 app.set("trust proxy", 1);
 
-//Middleware
+// Middleware
+app.use(helmet({
+    crossOriginResourcePolicy: false, // Allows images to load from cross-origin
+}));
+app.use(compression()); // Compress all responses
+app.use(morgan('dev')); // Professional logging
+
+// Rate Limiting (Professional Security & Performance)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes',
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+app.use('/auth/users', limiter); // Apply rate limiting to auth routes
+app.use('/issue', limiter); // Protect issue creation and issue-related endpoints
+
 app.use(cors({
     origin: ['http://localhost:5173', 'https://civic-issue-reporting-rho.vercel.app'], // frontend URL
     credentials: true, // Allow cookies and sessions
-    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
+// CSRF Protection: Validate Origin for state-changing requests
+app.use((req, res, next) => {
+if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const origin = req.headers.origin;
+    const referer = req.headers.referer;
+
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'https://civic-issue-reporting-rho.vercel.app'
+    ];
+
+    const isValid =
+        (origin && allowedOrigins.includes(origin)) ||
+        (referer && allowedOrigins.some(o => referer.startsWith(o)));
+
+    if (!isValid) {
+        return res.status(403).json({
+            success: false,
+            message: 'CSRF protection: Invalid origin'
+        });
+    }
+}
+    next();
+});
+
 app.use(cookieParser());
-app.use(express.json());
+// Use a safe default JSON body size to reduce DoS risk; file uploads should be handled via multipart/form-data (multer)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(session({
-    secret: 'mySecretKey', // use a strong secret key in production
+    secret: process.env.SESSION_SECRET, // use a strong secret key in production
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+        collectionName: 'sessions',
+    }),
     proxy: true, // Required for secure cookies behind proxies (Render)
-    rolling: true, // Resets session expiration on every request
+    rolling: false, // Session expires after maxAge from creation
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // MUST be true for SameSite=None
@@ -74,6 +126,9 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
     console.log(`Server started at http://localhost:${PORT}`);
+
+    // Initialize Socket.io
+    require('./Config/socket').init(server);
 
     // Activy Log Cleanup Schedule (Runs every 12 hours)
 

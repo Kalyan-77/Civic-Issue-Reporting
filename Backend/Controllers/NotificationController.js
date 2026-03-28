@@ -1,4 +1,5 @@
 const Notification = require('../Models/NotificationModel');
+const io = require('../Config/socket');
 
 // Create a notification (Internal function, can be exported if needed)
 exports.createNotification = async (recipient, sender, type, issueId, message) => {
@@ -11,6 +12,14 @@ exports.createNotification = async (recipient, sender, type, issueId, message) =
             message
         });
         await notification.save();
+        
+        // Emit socket notification to the recipient's room
+        try {
+            io.getIo().to(recipient.toString()).emit('new_notification', notification);
+        } catch (socketError) {
+            console.error('Socket.io error emitting notification:', socketError);
+        }
+        
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);

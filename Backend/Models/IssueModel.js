@@ -29,4 +29,11 @@ const issueSchema = new mongoose.Schema({
   resolvedAt: { type: Date }
 });
 
+// Professional Indexing for Performance
+issueSchema.index({ status: 1 });
+issueSchema.index({ category: 1 });
+issueSchema.index({ createdBy: 1 });
+issueSchema.index({ assignedTo: 1 });
+issueSchema.index({ createdAt: -1 }); // Fast sorting by newest
+
 module.exports = mongoose.model('Issue', issueSchema);

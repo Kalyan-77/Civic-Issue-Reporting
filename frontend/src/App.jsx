@@ -1,69 +1,76 @@
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-import Login from './Auth/Login';
-import Register from './Auth/Register';
-import ForgotPassword from './Auth/ForgotPassword';
-import Home from './Components/Home';
-import UserDashboard from './Components/UserDashboard';
-import Dashboard from './Pages/dashboard';
-import ProtectedRoute from './Components/ProtectedRoute';
-import AdminDashboard from './Components/AdminDashboard';
-import SuperAdmin from './Components/SuperAdmin';
+import Loading from './Components/Loading';
+
+const Login = lazy(() => import('./Auth/Login'));
+const Register = lazy(() => import('./Auth/Register'));
+const ForgotPassword = lazy(() => import('./Auth/ForgotPassword'));
+const Home = lazy(() => import('./Components/Home'));
+const UserDashboard = lazy(() => import('./Components/UserDashboard'));
+const Dashboard = lazy(() => import('./Pages/dashboard'));
+const AdminDashboard = lazy(() => import('./Components/AdminDashboard'));
+const SuperAdmin = lazy(() => import('./Components/SuperAdmin'));
 
 import { ThemeProvider } from './Context/ThemeContext';
+// Note: ProtectedRoute is used as a component wrapper, not a lazy route itself. 
+// I will keep its import synchronous to avoid logic delays, but lazy load its children.
+import ProtectedRouteSync from './Components/ProtectedRoute';
 
 function App() {
   return (
     <ThemeProvider>
       <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Home Page (public) */}
-          <Route path="/*" element={<Home />} />
+            {/* Citizen-only routes */}
+            <Route
+              path="/citizen/*"
+              element={
+                <ProtectedRouteSync allowedRoles={['citizen']}>
+                  <UserDashboard />
+                </ProtectedRouteSync>
+              }
+            />
 
-          {/* Citizen-only routes */}
-          <Route
-            path="/citizen/*"
-            element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRouteSync allowedRoles={['citizen']}>
+                  <Dashboard />
+                </ProtectedRouteSync>
+              }
+            />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Department Admin-only routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRouteSync allowedRoles={['dept_admin']}>
+                  <AdminDashboard />
+                </ProtectedRouteSync>
+              }
+            />
 
-          {/* Department Admin-only routes */}
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute allowedRoles={['dept_admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+            {/* Super Admin-only routes */}
+            <Route
+              path="/superadmin/*"
+              element={
+                <ProtectedRouteSync allowedRoles={['super_admin']}>
+                  <SuperAdmin />
+                </ProtectedRouteSync>
+              }
+            />
 
-          {/* Super Admin-only routes */}
-          <Route
-            path="/superadmin/*"
-            element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <SuperAdmin />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+            {/* Home Page (public) */}
+            <Route path="/*" element={<Home />} />
+          </Routes>
+        </Suspense>
       </Router>
     </ThemeProvider>
   );

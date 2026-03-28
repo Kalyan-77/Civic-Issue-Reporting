@@ -76,28 +76,41 @@ export default function AdminIssues() {
     const fetchAllIssues = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${BASE_URL}/issue/all`, {
-                method: "GET",
-                credentials: "include",
-            });
-
-            if (!res.ok) throw new Error("Failed to fetch issues");
-
-            const data = await res.json();
-
-            // Filter issues relevant to this admin's department (if dept_admin)
-            let relevantIssues = data;
+            let data;
             if (admin.role === 'dept_admin') {
-                const deptNormalized = normalizeStr(admin.department);
-                relevantIssues = data.filter(issue => {
-                    const catNormalized = normalizeStr(issue.category);
-                    if (deptNormalized === 'streetlight') return catNormalized === 'streetlight';
-                    return catNormalized.includes(deptNormalized) || deptNormalized.includes(catNormalized);
+                // Fetch ONLY issues assigned to this specific admin
+                const res = await fetch(`${BASE_URL}/issue/admin/${admin._id || admin.id}`, {
+                    method: "GET",
+                    credentials: "include",
                 });
+
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => null);
+                    const message = errJson?.message || 'Failed to fetch issues';
+                    throw new Error(message);
+                }
+
+                const json = await res.json();
+                // Endpoint returns { success, issues } or 404 when no issues
+                data = Array.isArray(json) ? json : json.issues || [];
+            } else {
+                // Super admin sees all issues
+                const res = await fetch(`${BASE_URL}/issue/all`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                if (!res.ok) {
+                    console.error('Failed to fetch issues:', res.status);
+                    data = [];
+                } else {
+                    const json = await res.json();
+                    data = Array.isArray(json) ? json : json.issues || [];
+                }
             }
 
             // Normalize priority
-            const issuesWithPriority = relevantIssues.map(issue => ({
+            const issuesWithPriority = data.map(issue => ({
                 ...issue,
                 priority: issue.priority || 'medium'
             }));

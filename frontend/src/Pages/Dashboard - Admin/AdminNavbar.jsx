@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, User, LogOut, LayoutDashboard, Home, Bell, Settings, FileText, BarChart2, Video, Phone, Mail } from 'lucide-react';
 import { BASE_URL } from '../../../config';
 import { useTheme } from '../../Context/ThemeContext';
+import { io } from 'socket.io-client';
 
 export default function Navbar() {
   const { isDark } = useTheme();
@@ -53,6 +54,7 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [socketError, setSocketError] = useState(null);
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -71,8 +73,40 @@ export default function Navbar() {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
-      return () => clearInterval(interval);
+
+      const socket = io(BASE_URL, {
+        withCredentials: true,
+        auth: { userId: user._id || user.id }
+      });
+
+      const handleSocketError = (err) => {
+        console.error('Socket connection error:', err);
+        setSocketError(err?.message || 'Failed to connect to notifications service');
+        // Fallback: refresh notifications periodically
+        fetchNotifications();
+      };
+
+      socket.on('connect', () => {
+        setSocketError(null);
+        socket.emit('join_user_room', user._id || user.id);
+      });
+
+      socket.on('connect_error', handleSocketError);
+      socket.on('connect_timeout', handleSocketError);
+      socket.on('error', handleSocketError);
+
+      socket.on('new_notification', () => {
+        fetchNotifications();
+      });
+
+      return () => {
+        socket.off('connect');
+        socket.off('connect_error', handleSocketError);
+        socket.off('connect_timeout', handleSocketError);
+        socket.off('error', handleSocketError);
+        socket.off('new_notification');
+        socket.disconnect();
+      };
     }
   }, [user]);
 

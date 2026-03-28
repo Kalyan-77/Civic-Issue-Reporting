@@ -62,12 +62,37 @@ export default function AdminHome() {
         const sessionData = await sessionRes.json();
 
         if (sessionData.loggedIn && (sessionData.user.role === 'dept_admin' || sessionData.user.role === 'super_admin')) {
-          setUser(sessionData.user);
+          const currentUser = sessionData.user;
+          setUser(currentUser);
 
-          const issuesRes = await fetch(`${BASE_URL}/issue/all`, {
-            credentials: 'include'
-          });
-          const issuesData = await issuesRes.json();
+          let issuesData;
+          if (currentUser.role === 'dept_admin') {
+            // Fetch ONLY this admin's assigned issues
+            const issuesRes = await fetch(`${BASE_URL}/issue/admin/${currentUser._id || currentUser.id}`, {
+              credentials: 'include'
+            });
+
+            if (!issuesRes.ok) {
+              console.error('Failed to fetch admin issues', issuesRes.status);
+              issuesData = [];
+            } else {
+              const json = await issuesRes.json();
+              issuesData = json.issues || [];
+            }
+          } else {
+            // Super admin sees everything
+            const issuesRes = await fetch(`${BASE_URL}/issue/all`, {
+              credentials: 'include'
+            });
+
+            if (!issuesRes.ok) {
+              console.error('Failed to fetch all issues', issuesRes.status);
+              issuesData = [];
+            } else {
+              const json = await issuesRes.json();
+              issuesData = json.issues || [];
+            }
+          }
 
           const activityRes = await fetch(`${BASE_URL}/activity/today`, {
             credentials: 'include'
@@ -77,7 +102,8 @@ export default function AdminHome() {
             setTodayActivities(activityData.activities);
           }
 
-          processData(issuesData, sessionData.user.role === 'dept_admin' ? sessionData.user.department : null);
+          // No department filtering needed — data is already scoped
+          processData(issuesData, null);
         }
       } catch (error) {
         console.error("Error loading dashboard:", error);
@@ -99,17 +125,9 @@ export default function AdminHome() {
       date.getFullYear() === today.getFullYear();
   };
 
-  const processData = (issues, department) => {
-    let relevantIssues = issues;
-
-    if (department) {
-      const deptNormalized = normalizeStr(department);
-      relevantIssues = issues.filter(issue => {
-        const catNormalized = normalizeStr(issue.category);
-        if (deptNormalized === 'streetlight') return catNormalized === 'streetlight';
-        return catNormalized.includes(deptNormalized) || deptNormalized.includes(catNormalized);
-      });
-    }
+  const processData = (issues, _department) => {
+    // issues are already scoped to this admin (or all for super admin) — no further filtering needed
+    const relevantIssues = issues;
 
     const total = relevantIssues.length;
     const pending = relevantIssues.filter(i => i.status === 'Pending').length;

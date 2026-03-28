@@ -3,6 +3,7 @@ import { Menu, X, ChevronDown, User, LogOut, LayoutDashboard, Home, Settings, Be
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BASE_URL } from '../../../config';
 import { useTheme } from '../../Context/ThemeContext';
+import { io } from 'socket.io-client';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [socketError, setSocketError] = useState(null);
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,9 +65,39 @@ export default function Navbar() {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      // Poll every 5 seconds for near real-time updates
-      const interval = setInterval(fetchNotifications, 5000);
-      return () => clearInterval(interval);
+
+      const socket = io(BASE_URL, {
+        withCredentials: true,
+        auth: { userId: user._id || user.id }
+      });
+
+      const handleSocketError = (err) => {
+        console.error('Socket connection error:', err);
+        setSocketError(err?.message || 'Failed to connect to notifications service');
+        fetchNotifications();
+      };
+
+      socket.on('connect', () => {
+        setSocketError(null);
+        socket.emit('join_user_room', user._id || user.id);
+      });
+
+      socket.on('connect_error', handleSocketError);
+      socket.on('connect_timeout', handleSocketError);
+      socket.on('error', handleSocketError);
+
+      socket.on('new_notification', () => {
+        fetchNotifications();
+      });
+
+      return () => {
+        socket.off('connect');
+        socket.off('connect_error', handleSocketError);
+        socket.off('connect_timeout', handleSocketError);
+        socket.off('error', handleSocketError);
+        socket.off('new_notification');
+        socket.disconnect();
+      };
     }
   }, [user]);
 

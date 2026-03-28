@@ -12,6 +12,7 @@ import { ShieldOff } from "lucide-react";
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -51,8 +52,6 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   // Not logged in → redirect to login
   if (!user) return <Navigate to="/login" replace />;
-
-  const location = useLocation();
 
   // Logged in but wrong role or Super Admin on non-superadmin path → 403 Access Denied
   const isSuperAdminOnWrongPath = user.role === 'super_admin' && !location.pathname.startsWith('/superadmin');

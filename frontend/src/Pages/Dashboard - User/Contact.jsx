@@ -107,7 +107,10 @@ export default function Contact() {
         {location && (
           <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
             <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors" />
-            <span>{location}</span>
+            {(() => {
+              const parts = [location.address, location.state, location.area].filter(Boolean);
+              return <span>{parts.join(', ')}</span>;
+            })()}
           </div>
         )}
       </div>

@@ -560,30 +560,38 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid Email or Password' });
         }
 
-        req.session.user = {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            department: user.department || null
-        };
+        // Regenerate session to prevent session fixation
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error('Session regeneration error:', err);
+                return res.status(500).json({ message: 'Session regeneration failed' });
+            }
 
-        const userResponse = {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            department: user.department || null,
-            department: user.department || null,
-            location: user.location // Includes nested address, state, area
-        };
+            req.session.user = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                department: user.department || null
+            };
 
-        // Log Login Activity
-        logActivity(user._id, 'LOGIN', { email: user.email }, req.ip);
+            const userResponse = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                department: user.department || null,
+                department: user.department || null,
+                location: user.location // Includes nested address, state, area
+            };
 
-        res.status(200).json({
-            message: 'Login Successful',
-            user: userResponse
+            // Log Login Activity
+            logActivity(user._id, 'LOGIN', { email: user.email }, req.ip);
+
+            res.status(200).json({
+                message: 'Login Successful',
+                user: userResponse
+            });
         });
     } catch (err) {
         console.error('Error during login:', err);
