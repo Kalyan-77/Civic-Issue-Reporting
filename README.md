@@ -46,6 +46,29 @@ A full-stack platform that bridges the gap between citizens and local authoritie
 
 ---
 
+## 🔒 Security
+
+| Measure | Implementation |
+| :--- | :--- |
+| **Secure Headers** | Helmet middleware prevents XSS, clickjacking, and common HTTP vulnerabilities |
+| **Rate Limiting** | `express-rate-limit` — 100 requests per 15 minutes per IP |
+| **CSRF Defense** | Manual origin + referer validation on all state-changing requests (POST, PUT, DELETE, PATCH) |
+| **Session Security** | `httpOnly`, `secure` (production), and `SameSite: none` for safe cross-origin auth |
+| **Password Hashing** | Industry-standard bcrypt encryption |
+
+---
+
+## ⚡ Performance
+
+| Optimization | Detail |
+| :--- | :--- |
+| **Response Compression** | `compression` middleware reduces payload sizes and latency |
+| **Database Indexing** | Strategic indexes on `status`, `category`, `assignedTo`, `createdAt` for fast queries |
+| **CDN-Offloaded Assets** | Images served via Cloudinary — zero media load on the app server |
+| **Background Maintenance** | Automated DB cleanup routines run every 12 hours |
+
+---
+
 ## 📂 Project Structure
 ```text
 Capstone - Project/
