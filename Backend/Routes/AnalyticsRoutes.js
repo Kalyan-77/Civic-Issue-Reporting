@@ -7,7 +7,7 @@ const {
   getIssuesByStatusAnalytics,
   getIssuesOverTimeAnalytics,
   getAdminPerformanceAnalytics,
-  getEscalationAnalytics,
+  getMisroutedAnalytics,
   getCategoryResolutionAnalytics,
   getIssueTrendsAnalytics,
   getIssuesByAreaAnalytics,
@@ -23,7 +23,7 @@ router.get('/issues-by-category', isSuperAdmin, getIssuesByCategoryAnalytics);
 router.get('/issues-by-status', isSuperAdmin, getIssuesByStatusAnalytics);
 router.get('/issues-over-time', isSuperAdmin, getIssuesOverTimeAnalytics);
 router.get('/admin-performance', isSuperAdmin, getAdminPerformanceAnalytics);
-router.get('/escalations', isSuperAdmin, getEscalationAnalytics);
+router.get('/misrouted', isSuperAdmin, getMisroutedAnalytics);
 router.get('/category-resolution', isSuperAdmin, getCategoryResolutionAnalytics);
 router.get('/issue-trends', isSuperAdmin, getIssueTrendsAnalytics);
 router.get('/issues-by-area', isSuperAdmin, getIssuesByAreaAnalytics);

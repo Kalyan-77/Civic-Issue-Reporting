@@ -6,8 +6,10 @@ import {
   PlayCircle, Download, Users, Shield, Settings, Loader2
 } from 'lucide-react';
 import { BASE_URL } from '../../../config';
+import { useTheme } from '../../Context/ThemeContext';
 
 const Help = () => {
+  const { isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openFaq, setOpenFaq] = useState(null);
@@ -299,31 +301,31 @@ const Help = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-21">
+    <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'} pt-21 transition-colors duration-300`}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className={`${isDark ? 'bg-gray-900 border-b border-gray-800 shadow-lg' : 'bg-white shadow-sm border-b border-gray-200'} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-              <HelpCircle className="w-8 h-8 text-white" />
+            <div className={`inline-flex items-center justify-center w-16 h-16 ${isDark ? 'bg-blue-900/40' : 'bg-blue-600'} rounded-full mb-4`}>
+              <HelpCircle className={`w-8 h-8 ${isDark ? 'text-blue-400' : 'text-white'}`} />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Help & Support Center</h1>
-            <p className="text-gray-600 text-lg">Find answers, tutorials, and get assistance</p>
+            <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Help & Support Center</h1>
+            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-lg`}>Find answers, tutorials, and get assistance</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className={`${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white p-6'} rounded-xl shadow-lg p-6 mb-8`}>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'} w-5 h-5`} />
             <input
               type="text"
               placeholder="Search for help articles, guides, or FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+              className={`w-full pl-12 pr-4 py-4 border-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} rounded-lg text-lg outline-none transition-all`}
             />
           </div>
         </div>
@@ -334,13 +336,13 @@ const Help = () => {
             <button
               key={index}
               onClick={() => window.open(link.link, '_blank')}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all hover:-translate-y-1 group text-left"
+              className={`${isDark ? 'bg-gray-900 border border-gray-800 hover:border-blue-500/50 hover:bg-gray-800' : 'bg-white rounded-xl shadow-md p-6 hover:shadow-xl hover:-translate-y-1'} rounded-xl shadow-md p-6 transition-all group text-left`}
             >
               <link.icon className={`w-8 h-8 ${link.color} mb-3`} />
-              <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+              <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2 group-hover:text-blue-600 transition-colors`}>
                 {link.title}
               </h3>
-              <div className="flex items-center text-sm text-gray-500">
+              <div className={`flex items-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 <span>Learn more</span>
                 <ExternalLink className="w-4 h-4 ml-1" />
               </div>
@@ -349,29 +351,29 @@ const Help = () => {
         </div>
 
         {/* Video Tutorials */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className={`${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white shadow-lg'} rounded-xl p-6 mb-8`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Video className="w-6 h-6 text-purple-600" />
-              <h2 className="text-2xl font-bold text-gray-900">Video Tutorials</h2>
+              <Video className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-purple-600'}`} />
+              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Video Tutorials</h2>
             </div>
-            <button className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-1">
+            <button className={`${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} font-medium text-sm flex items-center gap-1`}>
               View All <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {videoTutorials.map((video, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg p-8 mb-3 flex items-center justify-center text-6xl relative overflow-hidden group-hover:scale-105 transition-transform">
+              <div key={index} className="group cursor-pointer text-left">
+                <div className={`bg-gradient-to-br ${isDark ? 'from-blue-900/40 to-purple-900/40' : 'from-purple-500 to-blue-600'} rounded-lg p-8 mb-3 flex items-center justify-center text-6xl relative overflow-hidden group-hover:scale-105 transition-transform`}>
                   {video.thumbnail}
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <PlayCircle className="w-16 h-16 text-white" />
                   </div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                <h4 className={`font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'} mb-1 group-hover:text-blue-400 transition-colors`}>
                   {video.title}
                 </h4>
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className={`flex items-center justify-between text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                   <span>{video.duration}</span>
                   <span>{video.views} views</span>
                 </div>
@@ -384,14 +386,14 @@ const Help = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
           {/* Category Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
-              <div className="space-y-2">
+            <div className={`${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white shadow-lg'} rounded-xl p-6 sticky top-24`}>
+              <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Categories</h3>
+              <div className="space-y-2 text-left">
                 <button
                   onClick={() => setSelectedCategory('all')}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${selectedCategory === 'all'
-                    ? 'bg-blue-100 text-blue-600 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600 font-medium')
+                    : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100')
                     }`}
                 >
                   All Categories
@@ -401,8 +403,8 @@ const Help = () => {
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${selectedCategory === category.id
-                      ? 'bg-blue-100 text-blue-600 font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600 font-medium')
+                      : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100')
                       }`}
                   >
                     <category.icon className="w-5 h-5" />
@@ -415,46 +417,46 @@ const Help = () => {
 
           {/* FAQ Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className={`${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white shadow-lg'} rounded-xl p-6`}>
+              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>
                 Frequently Asked Questions
               </h2>
 
               {filteredFaqs.length > 0 ? (
                 <div className="space-y-6">
                   {filteredFaqs.map((category) => (
-                    <div key={category.id}>
+                    <div key={category.id} className="text-left">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className={`p-2 rounded-lg ${category.color}`}>
+                        <div className={`p-2 rounded-lg ${isDark ? 'bg-gray-800 text-blue-400' : category.color}`}>
                           <category.icon className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className={`text-lg font-semibold ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
                           {category.name}
                         </h3>
                       </div>
-                      <div className="space-y-3 ml-11">
+                      <div className="space-y-3 ml-0 sm:ml-11">
                         {category.faqs.map((faq, index) => (
                           <div
                             key={index}
-                            className="border border-gray-200 rounded-lg overflow-hidden"
+                            className={`border ${isDark ? 'border-gray-800 bg-gray-950/40' : 'border-gray-200'} rounded-lg overflow-hidden transition-colors`}
                           >
                             <button
                               onClick={() =>
                                 setOpenFaq(openFaq === `${category.id}-${index}` ? null : `${category.id}-${index}`)
                               }
-                              className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                              className={`w-full text-left px-6 py-4 flex items-center justify-between ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors`}
                             >
-                              <span className="font-medium text-gray-900 pr-4">
+                              <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-900'} pr-4`}>
                                 {faq.question}
                               </span>
                               <ChevronDown
-                                className={`w-5 h-5 text-gray-500 transition-transform flex-shrink-0 ${openFaq === `${category.id}-${index}` ? 'transform rotate-180' : ''
+                                className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-500'} transition-transform flex-shrink-0 ${openFaq === `${category.id}-${index}` ? 'transform rotate-180' : ''
                                   }`}
                               />
                             </button>
                             {openFaq === `${category.id}-${index}` && (
-                              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                                <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                              <div className={`px-6 py-4 ${isDark ? 'bg-gray-800/50 border-t border-gray-800' : 'bg-gray-50 border-t border-gray-200'}`}>
+                                <p className={`${isDark ? 'text-gray-400' : 'text-gray-700'} leading-relaxed`}>{faq.answer}</p>
                               </div>
                             )}
                           </div>
@@ -465,8 +467,8 @@ const Help = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <HelpCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600">No FAQs found matching your search.</p>
+                  <HelpCircle className="w-16 h-16 text-gray-300 mx-auto mb-4 opacity-20" />
+                  <p className={`${isDark ? 'text-gray-500' : 'text-gray-600'}`}>No FAQs found matching your search.</p>
                 </div>
               )}
             </div>
@@ -476,62 +478,62 @@ const Help = () => {
         {/* Contact Support Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {contactMethods.map((method, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <div className={`w-12 h-12 ${method.color} rounded-lg flex items-center justify-center mb-4`}>
-                <method.icon className="w-6 h-6" />
+            <div key={index} className={`${isDark ? 'bg-gray-900 border border-gray-800 hover:border-blue-500/30' : 'bg-white shadow-lg'} rounded-xl p-6 hover:shadow-xl transition-all text-left`}>
+              <div className={`w-12 h-12 ${isDark ? 'bg-gray-800' : method.color} rounded-lg flex items-center justify-center mb-4`}>
+                <method.icon className={`w-6 h-6 ${isDark ? (method.title.includes('Email') ? 'text-blue-400' : method.title.includes('Phone') ? 'text-green-400' : 'text-purple-400') : ''}`} />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{method.title}</h3>
-              <p className="text-gray-900 font-medium mb-1">{method.detail}</p>
-              <p className="text-sm text-gray-500">{method.subtitle}</p>
+              <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{method.title}</h3>
+              <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-medium mb-1`}>{method.detail}</p>
+              <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{method.subtitle}</p>
             </div>
           ))}
         </div>
 
         {/* Support Ticket Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className={`${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white shadow-lg'} rounded-xl p-8`}>
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Submit a Support Ticket</h2>
-              <p className="text-gray-600">Can't find what you're looking for? Send us a message and we'll get back to you.</p>
+              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Submit a Support Ticket</h2>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Can't find what you're looking for? Send us a message and we'll get back to you.</p>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700 font-medium">
+              <div className={`mb-6 p-4 ${isDark ? 'bg-red-900/20 border-red-900/50 text-red-400' : 'bg-red-50 border border-red-100 text-red-700'} rounded-lg flex items-center gap-3 font-medium`}>
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
             {formSubmitted ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
-                <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-green-900 mb-2">Ticket Submitted Successfully!</h3>
-                <p className="text-green-700">We've received your support request and will respond within 24 hours.</p>
+              <div className={`${isDark ? 'bg-green-900/20 border-green-900/50' : 'bg-green-50 border border-green-200'} rounded-lg p-8 text-center`}>
+                <CheckCircle className={`w-16 h-16 ${isDark ? 'text-green-400' : 'text-green-600'} mx-auto mb-4`} />
+                <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-green-900'} mb-2`}>Ticket Submitted Successfully!</h3>
+                <p className={`${isDark ? 'text-green-700/80' : 'text-green-700'}`}>We've received your support request and will respond within 24 hours.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 text-left">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                       Your Name *
                     </label>
                     <input
                       type="text"
                       value={supportForm.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} border rounded-lg outline-none transition-all`}
                       placeholder="John Doe"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                       Email Address *
                     </label>
                     <input
                       type="email"
                       value={supportForm.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} border rounded-lg outline-none transition-all`}
                       placeholder="john@example.com"
                     />
                   </div>
@@ -539,26 +541,26 @@ const Help = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                       Subject *
                     </label>
                     <input
                       type="text"
                       value={supportForm.subject}
                       onChange={(e) => handleInputChange('subject', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} border rounded-lg outline-none transition-all`}
                       placeholder="Brief description of your issue"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                       To Whom To Contact (Super Admin) *
                     </label>
                     <div className="relative">
                       <select
                         value={supportForm.recipient}
                         onChange={(e) => handleInputChange('recipient', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                        className={`w-full px-4 py-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} border rounded-lg outline-none transition-all appearance-none cursor-pointer`}
                       >
                         <option value="" disabled>Select Super Admin</option>
                         {superAdmins.map(admin => (
@@ -571,14 +573,14 @@ const Help = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
                     Message *
                   </label>
                   <textarea
                     value={supportForm.message}
                     onChange={(e) => handleInputChange('message', e.target.value)}
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className={`w-full px-4 py-3 ${isDark ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'} border rounded-lg outline-none transition-all resize-none`}
                     placeholder="Please describe your issue in detail..."
                   ></textarea>
                 </div>
@@ -586,7 +588,7 @@ const Help = () => {
                 <button
                   onClick={handleFormSubmit}
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  className={`w-full ${isDark ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'} text-white py-4 rounded-lg transition-all font-medium flex items-center justify-center gap-2 text-lg disabled:opacity-70 disabled:cursor-not-allowed shadow-lg`}
                 >
                   {loading ? (
                     <>
@@ -606,17 +608,17 @@ const Help = () => {
         </div>
 
         {/* Additional Resources */}
-        <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+        <div className={`mt-8 bg-gradient-to-r ${isDark ? 'from-blue-900 to-purple-900' : 'from-blue-600 to-purple-600'} rounded-xl shadow-lg p-8 text-white`}>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-2xl font-bold mb-4">Need Immediate Assistance?</h2>
-            <p className="text-blue-100 mb-6">
+            <p className={`${isDark ? 'text-blue-200' : 'text-blue-100'} mb-6`}>
               Our support team is available 24/7 to help you with any urgent issues or questions.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors">
+              <button className={`${isDark ? 'bg-blue-800 hover:bg-blue-700' : 'bg-white text-blue-600 hover:bg-blue-50'} px-6 py-3 rounded-lg font-medium transition-colors`}>
                 Start Live Chat
               </button>
-              <button className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-400 transition-colors">
+              <button className={`${isDark ? 'bg-purple-800 hover:bg-purple-700' : 'bg-blue-500 hover:bg-blue-400'} text-white px-6 py-3 rounded-lg font-medium transition-colors`}>
                 Schedule a Call
               </button>
             </div>

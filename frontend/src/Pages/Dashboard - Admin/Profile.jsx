@@ -157,7 +157,7 @@ export default function AdminProfile() {
             case 'UPDATE_STATUS': return `Updated issue status to ${activity.details?.status}`;
             case 'ASSIGN_ISSUE': return `Assigned issue to admin`;
             case 'COMMENT': return `Commented on issue`;
-            case 'ESCALATE_ISSUE': return `Escalated an issue`;
+            case 'REPORT_MISROUTED': return `Reported issue as misrouted`;
             case 'BLOCK_USER': return `Blocked a user`;
             case 'UNBLOCK_USER': return `Unblocked a user`;
             default: return activity.action.replace(/_/g, ' ');
@@ -167,7 +167,7 @@ export default function AdminProfile() {
     const mapActionToType = (action) => {
         if (['LOGIN', 'LOGOUT', 'UPDATE_PROFILE'].includes(action)) return 'system';
         if (['CREATE_ISSUE', 'UPDATE_STATUS', 'ASSIGN_ISSUE', 'COMMENT'].includes(action)) return 'resolution';
-        if (['ESCALATE_ISSUE', 'BLOCK_USER', 'UNBLOCK_USER'].includes(action)) return 'alert';
+        if (['REPORT_MISROUTED', 'BLOCK_USER', 'UNBLOCK_USER'].includes(action)) return 'alert';
         return 'system';
     };
 

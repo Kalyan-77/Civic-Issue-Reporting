@@ -15,7 +15,6 @@ const {
     getComments,
     deleteComment,
     editIssue,
-    escalateIssue,
     reassignIssue
 } = require('../Controllers/IssueController');
 
@@ -46,9 +45,6 @@ router.put('/assign/:issueId', isSuperAdmin, assignIssueToAdmin);
 router.put('/reassign/:issueId', isDeptAdmin, reassignIssue);
 // Get all dept_admins for a department with their current load (for Super Admin UI)
 router.get('/admins/by-department/:department', isSuperAdmin, getAdminsByDepartment);
-
-// Escalation routes - SUPER ADMIN ONLY
-router.put('/escalate/:issueId', isSuperAdmin, escalateIssue);
 
 // Department admin routes
 router.get('/admin/:adminId', isDeptAdmin, getIssuesByAdmin);

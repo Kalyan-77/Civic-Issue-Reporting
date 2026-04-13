@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
@@ -21,8 +22,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../Context/ThemeContext';
 import { BASE_URL } from '../../../config';
+import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
+    const { t } = useTranslation();
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -346,10 +349,10 @@ export default function Dashboard() {
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                             <h1 className={`text-4xl font-extrabold flex items-center gap-2 mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                Hello, {user?.name?.split(' ')[0]}! 👋
+                                {t('dashboard.welcome', 'Hello')}, {user?.name?.split(' ')[0]}! 👋
                             </h1>
                             <p className={`text-lg max-w-xl ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                                Welcome back to your community hub. Track, manage, and report issues to keep your neighborhood safe and clean.
+                                {t('dashboard.hero_desc', 'Welcome back to your community hub. Track, manage, and report issues to keep your neighborhood safe and clean.')}
                             </p>
                         </div>
                         <button
@@ -357,7 +360,7 @@ export default function Dashboard() {
                             className="group flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-blue-600/30 transition-all hover:scale-105 active:scale-95"
                         >
                             <Plus className="w-6 h-6 transition-transform group-hover:rotate-90" />
-                            <span>Report Issue</span>
+                            <span>{t('dashboard.report_btn', 'Report Issue')}</span>
                         </button>
                     </div>
                     {/* Decorative Elements */}
@@ -367,28 +370,28 @@ export default function Dashboard() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
-                        title="Total Reports"
+                        title={t('dashboard.stats.total', 'Total Reports')}
                         value={stats.total}
                         icon={LayoutDashboard}
                         color="blue"
                         isDark={isDark}
                     />
                     <StatCard
-                        title="Pending Review"
+                        title={t('dashboard.stats.pending', 'Pending Review')}
                         value={stats.pending}
                         icon={Clock}
                         color="orange"
                         isDark={isDark}
                     />
                     <StatCard
-                        title="In Progress"
+                        title={t('dashboard.stats.in_progress', 'In Progress')}
                         value={stats.inProgress}
                         icon={AlertCircle}
                         color="indigo"
                         isDark={isDark}
                     />
                     <StatCard
-                        title="Resolved"
+                        title={t('dashboard.stats.resolved', 'Resolved')}
                         value={stats.resolved}
                         icon={CheckCircle2}
                         color="green"
@@ -405,10 +408,10 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <h2 className={`font-bold text-xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                    Filter Issues
+                                    {t('dashboard.filter.title', 'Filter Issues')}
                                 </h2>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                                    Narrow down your search results
+                                    {t('dashboard.filter.subtitle', 'Narrow down your search results')}
                                 </p>
                             </div>
                         </div>
@@ -435,11 +438,11 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                         {/* Search */}
                         <div className="lg:col-span-1 relative">
-                            <label className={labelStyles}>Search</label>
+                            <label className={labelStyles}>{t('dashboard.filter.search_label', 'Search')}</label>
                             <Search className="absolute left-4 top-[34px] w-4 h-4 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Search by title..."
+                                placeholder={t('dashboard.filter.search_placeholder', 'Search by title...')}
                                 value={filters.search}
                                 onChange={(e) => handleFilterChange('search', e.target.value)}
                                 className={`${inputStyles} pl-10`}
@@ -448,61 +451,61 @@ export default function Dashboard() {
 
                         {/* Dropdowns */}
                         <div className="relative">
-                            <label className={labelStyles}>Status</label>
+                            <label className={labelStyles}>{t('dashboard.filter.status_label', 'Status')}</label>
                             <select
                                 value={filters.status}
                                 onChange={(e) => handleFilterChange('status', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
+                                <option value="All">{t('dashboard.filter.all_status', 'All Status')}</option>
+                                <option value="Pending">{t('dashboard.stats.pending', 'Pending')}</option>
+                                <option value="In Progress">{t('dashboard.stats.in_progress', 'In Progress')}</option>
+                                <option value="Resolved">{t('dashboard.stats.resolved', 'Resolved')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Category</label>
+                            <label className={labelStyles}>{t('dashboard.filter.category_label', 'Category')}</label>
                             <select
                                 value={filters.category}
                                 onChange={(e) => handleFilterChange('category', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Categories</option>
-                                <option value="Garbage">Garbage</option>
-                                <option value="Streetlight">Streetlight</option>
-                                <option value="Pothole">Pothole</option>
-                                <option value="Water Leakage">Water Leakage</option>
-                                <option value="Other">Other</option>
+                                <option value="All">{t('dashboard.filter.all_categories', 'All Categories')}</option>
+                                <option value="Garbage">{t('report_issue.categories.garbage', 'Garbage')}</option>
+                                <option value="Streetlight">{t('report_issue.categories.lights', 'Streetlight')}</option>
+                                <option value="Pothole">{t('report_issue.categories.pothole', 'Pothole')}</option>
+                                <option value="Water Leakage">{t('report_issue.categories.water', 'Water Leakage')}</option>
+                                <option value="Other">{t('report_issue.categories.other', 'Other')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Priority</label>
+                            <label className={labelStyles}>{t('dashboard.filter.priority_label', 'Priority')}</label>
                             <select
                                 value={filters.priority}
                                 onChange={(e) => handleFilterChange('priority', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Priorities</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
+                                <option value="All">{t('dashboard.filter.all_priorities', 'All Priorities')}</option>
+                                <option value="High">{t('dashboard.filter.high', 'High')}</option>
+                                <option value="Medium">{t('dashboard.filter.medium', 'Medium')}</option>
+                                <option value="Low">{t('dashboard.filter.low', 'Low')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Sort Order</label>
+                            <label className={labelStyles}>{t('dashboard.filter.sort_label', 'Sort Order')}</label>
                             <select
                                 value={filters.sortBy}
                                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
+                                <option value="newest">{t('dashboard.filter.newest', 'Newest First')}</option>
+                                <option value="oldest">{t('dashboard.filter.oldest', 'Oldest First')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
@@ -514,7 +517,7 @@ export default function Dashboard() {
                     <>
                         <div className="flex items-center justify-between">
                             <p className={`text-base font-semibold ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                                Showing {filteredIssues.length} Issues
+                                {t('dashboard.showing_count', { count: filteredIssues.length })}
                             </p>
                         </div>
 
@@ -553,7 +556,11 @@ export default function Dashboard() {
                                             <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border backdrop-blur-md ${getStatusStyle(issue.status)} bg-white/90`}>
                                                 {issue.status}
                                             </span>
-                                        </div>
+                                            {issue.isReassignedToSuper && (
+                                                <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg border backdrop-blur-md bg-red-600 border-red-400 text-white">
+                                                    {t('dashboard.badge.misrouted', 'Misrouted')}
+                                                </span>
+                                            )}                                        </div>
 
                                         {/* Bottom Overlay Info */}
                                         <div className="absolute bottom-4 left-4 right-4 text-white">
@@ -610,7 +617,7 @@ export default function Dashboard() {
                                                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30'
                                                     }`}
                                             >
-                                                View Details
+                                                {t('dashboard.actions.view_details', 'View Details')}
                                             </button>
 
                                             {issue.status === 'Pending' && (
@@ -622,7 +629,7 @@ export default function Dashboard() {
                                                             : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                                                             }`}>
                                                         <Edit className="w-4 h-4" />
-                                                        Edit
+                                                        {t('dashboard.actions.edit', 'Edit')}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClick(issue)}
@@ -631,7 +638,7 @@ export default function Dashboard() {
                                                             : 'border-red-100 hover:bg-red-50 text-red-500'
                                                             }`}>
                                                         <Trash2 className="w-4 h-4" />
-                                                        Delete
+                                                        {t('dashboard.actions.delete', 'Delete')}
                                                     </button>
                                                 </>
                                             )}

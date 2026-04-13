@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Loader2, MapPin, Calendar, Tag, Eye, Trash2, Search, Filter,
   AlertCircle, CheckCircle, XCircle, X, Download,
-  BarChart3, TrendingUp, Clock, AlertTriangle,
+  BarChart3, TrendingUp, Clock, AlertTriangle, CornerUpRight,
   ChevronLeft, ChevronRight, Printer, RefreshCw, User,
   Users, MessageSquare, Send, Shield, UserPlus
 } from "lucide-react";
@@ -43,10 +43,7 @@ export default function SuperIssues() {
   const [loadingAdmins, setLoadingAdmins] = useState(false);
   /* Removed duplicate loadingAdmins */
 
-  const [showEscalatedOnly, setShowEscalatedOnly] = useState(false);
-  const [showEscalateModal, setShowEscalateModal] = useState(false);
-  const [issueToEscalate, setIssueToEscalate] = useState(null);
-  const [escalationReason, setEscalationReason] = useState("");
+  const [showMisroutedOnly, setShowMisroutedOnly] = useState(false);
 
   const statusColors = {
     Pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
@@ -93,14 +90,18 @@ export default function SuperIssues() {
     if (categoryParam) {
       setFilterCategory(decodeURIComponent(categoryParam));
     }
+    const misroutedParam = params.get('misrouted');
+    if (misroutedParam === 'true') {
+      setShowMisroutedOnly(true);
+    }
   }, [location]);
 
   useEffect(() => {
     filterAndSortIssues();
-  }, [issues, searchTerm, filterStatus, filterCategory, filterPriority, sortBy, dateRange, showEscalatedOnly]);
+  }, [issues, searchTerm, filterStatus, filterCategory, filterPriority, sortBy, dateRange, showMisroutedOnly]);
 
   useEffect(() => {
-    if (showModal || showDeleteModal || showStatsModal || showCommentsModal || showAssignModal || showEscalateModal) {
+    if (showModal || showDeleteModal || showStatsModal || showCommentsModal || showAssignModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -109,7 +110,7 @@ export default function SuperIssues() {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [showModal, showDeleteModal, showStatsModal, showCommentsModal, showAssignModal, showEscalateModal]);
+  }, [showModal, showDeleteModal, showStatsModal, showCommentsModal, showAssignModal]);
 
   const fetchAdminSession = async () => {
     try {
@@ -234,91 +235,7 @@ export default function SuperIssues() {
     }
   };
 
-  const openEscalateModal = (issue) => {
-    setIssueToEscalate(issue);
-    setShowEscalateModal(true);
-    setEscalationReason(issue.escalationReason || "");
-  };
 
-  const closeEscalateModal = () => {
-    setShowEscalateModal(false);
-    setIssueToEscalate(null);
-    setEscalationReason("");
-  };
-
-  const handleEscalateIssue = async () => {
-    if (!escalationReason.trim()) {
-      showToast("Please provide an escalation reason", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${BASE_URL}/issue/escalate/${issueToEscalate._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          isEscalated: true,
-          escalationReason: escalationReason.trim()
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to escalate issue");
-      }
-
-      const data = await res.json();
-
-      // Update the issues list
-      setIssues(issues.map(issue =>
-        issue._id === issueToEscalate._id ? data.issue : issue
-      ));
-
-      showToast("Issue escalated successfully", "success");
-      closeEscalateModal();
-      fetchAllIssues();
-    } catch (err) {
-      console.error("Error escalating issue:", err);
-      showToast(err.message || "Failed to escalate issue", "error");
-    }
-  };
-
-  const handleDeescalateIssue = async (issueId) => {
-    try {
-      const res = await fetch(`${BASE_URL}/issue/escalate/${issueId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          isEscalated: false,
-          escalationReason: ""
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to de-escalate issue");
-      }
-
-      const data = await res.json();
-
-      // Update the issues list
-      setIssues(issues.map(issue =>
-        issue._id === issueId ? data.issue : issue
-      ));
-
-      showToast("Issue de-escalated successfully", "success");
-      fetchAllIssues();
-    } catch (err) {
-      console.error("Error de-escalating issue:", err);
-      showToast(err.message || "Failed to de-escalate issue", "error");
-    }
-  };
 
   const fetchComments = async (issueId) => {
     setLoadingComments(true);
@@ -418,10 +335,9 @@ export default function SuperIssues() {
       );
     }
 
-    if (showEscalatedOnly) {
-      filtered = filtered.filter(issue => issue.isEscalated);
+    if (showMisroutedOnly) {
+      filtered = filtered.filter(issue => issue.isReassignedToSuper === true);
     }
-
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -604,7 +520,7 @@ export default function SuperIssues() {
       inProgress: issues.filter(i => i.status === "In Progress").length,
       resolved: issues.filter(i => i.status === "Resolved").length,
       critical: issues.filter(i => i.priority === "high").length,
-      escalated: issues.filter(i => i.isEscalated === true).length,
+      misrouted: issues.filter(i => i.isReassignedToSuper === true).length,
       uniqueUsers: new Set(issues.map(i => i.createdBy?._id).filter(Boolean)).size
     };
   };
@@ -699,14 +615,9 @@ export default function SuperIssues() {
             <p className="text-3xl font-bold">{stats.inProgress}</p>
           </div>
 
-          <div className="bg-red-500 rounded-lg shadow-sm p-6 text-white">
-            <p className="text-sm opacity-90 mb-1">Critical</p>
-            <p className="text-3xl font-bold">{stats.critical}</p>
-          </div>
-
-          <div className="bg-amber-600 rounded-lg shadow-sm p-6 text-white">
-            <p className="text-sm opacity-90 mb-1">Escalated</p>
-            <p className="text-3xl font-bold">{stats.escalated}</p>
+          <div className="bg-red-500 rounded-lg shadow-sm p-6 text-white col-span-2">
+            <p className="text-sm opacity-90 mb-1 text-center">Misrouted Issues</p>
+            <p className="text-3xl font-bold text-center">{stats.misrouted}</p>
           </div>
         </div>
 
@@ -786,17 +697,17 @@ export default function SuperIssues() {
 
 
 
-        {/* Escalation Filter Toggle */}
-        <div className="flex items-center gap-2 mb-4">
+        {/* Misrouted Filter Toggle */}
+        <div className="flex items-center gap-2 mb-6">
           <input
             type="checkbox"
-            id="escalatedOnly"
-            checked={showEscalatedOnly}
-            onChange={(e) => setShowEscalatedOnly(e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            id="misroutedOnly"
+            checked={showMisroutedOnly}
+            onChange={(e) => setShowMisroutedOnly(e.target.checked)}
+            className="w-5 h-5 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 cursor-pointer"
           />
-          <label htmlFor="escalatedOnly" className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} cursor-pointer select-none`}>
-            Show Escalated Issues Only
+          <label htmlFor="misroutedOnly" className={`text-sm font-bold ${isDark ? 'text-pink-400' : 'text-pink-600'} cursor-pointer select-none`}>
+            Show Misrouted Issues Only
           </label>
         </div>
 
@@ -889,10 +800,10 @@ export default function SuperIssues() {
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${priorityColors[issue.priority]}`}>
                               {issue.priority === "high" ? "High" : issue.priority === "medium" ? "Medium" : "Low"}
                             </span>
-                            {issue.isEscalated && (
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-red-600 text-white border-red-700 flex items-center gap-1">
-                                <AlertTriangle className="w-3 h-3" />
-                                Escalated
+                            {issue.isReassignedToSuper && (
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-pink-600 text-white border-pink-700 flex items-center gap-1 shadow-sm">
+                                <CornerUpRight className="w-3 h-3" />
+                                Misrouted
                               </span>
                             )}
                           </div>
@@ -934,23 +845,7 @@ export default function SuperIssues() {
                             >
                               <MessageSquare className="w-5 h-5" />
                             </button>
-                            {!issue.isEscalated ? (
-                              <button
-                                onClick={() => openEscalateModal(issue)}
-                                className={`p-2 rounded-lg transition-colors ${isDark ? 'text-orange-400 hover:bg-gray-700' : 'text-orange-600 hover:bg-orange-50'}`}
-                                title="Escalate"
-                              >
-                                <AlertTriangle className="w-5 h-5" />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleDeescalateIssue(issue._id)}
-                                className={`p-2 rounded-lg transition-colors ${isDark ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'}`}
-                                title="De-escalate"
-                              >
-                                <CheckCircle className="w-5 h-5" />
-                              </button>
-                            )}
+                            {/* No misroute action button anymore as it is dept admin driven */}
                             <button
                               onClick={() => openDeleteModal(issue)}
                               className={`p-2 rounded-lg transition-colors ${isDark ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-red-50'}`}
@@ -1199,14 +1094,14 @@ export default function SuperIssues() {
                     </span>
                   </div>
 
-                  {selectedIssue.isEscalated && (
-                    <div className={`${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border rounded-lg p-4`}>
+                  {selectedIssue.isReassignedToSuper && (
+                    <div className={`${isDark ? 'bg-pink-900/20 border-pink-800' : 'bg-pink-50 border-pink-200'} border rounded-lg p-4`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="w-5 h-5 text-red-600" />
-                        <h3 className={`text-sm font-semibold ${isDark ? 'text-red-400' : 'text-red-700'}`}>Escalated Issue</h3>
+                        <CornerUpRight className="w-5 h-5 text-pink-600" />
+                        <h3 className={`text-sm font-semibold ${isDark ? 'text-pink-400' : 'text-pink-700'}`}>Reported as Misrouted</h3>
                       </div>
-                      <p className={`text-sm ${isDark ? 'text-red-300' : 'text-red-600'}`}>
-                        <span className="font-semibold">Reason:</span> {selectedIssue.escalationReason}
+                      <p className={`text-sm ${isDark ? 'text-pink-300' : 'text-pink-600'}`}>
+                        <span className="font-semibold">Reason:</span> {selectedIssue.reassignmentReason || "No reason provided"}
                       </p>
                     </div>
                   )}
@@ -1358,80 +1253,6 @@ export default function SuperIssues() {
                   >
                     <Send className="w-4 h-4" />
                     Send
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Escalate Issue Modal */}
-      {
-        showEscalateModal && issueToEscalate && (
-          <div
-            className="fixed inset-0 flex items-center justify-center p-4 z-50"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-            onClick={closeEscalateModal}
-          >
-            <div
-              className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl max-w-md w-full shadow-2xl`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <AlertTriangle className="w-6 h-6" />
-                  Escalate Issue
-                </h2>
-                <button
-                  onClick={closeEscalateModal}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors cursor-pointer"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="p-6">
-                <div className="mb-4">
-                  <h3 className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Issue Details</h3>
-                  <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{issueToEscalate.title}</p>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-                    Category: <span className="font-medium">{issueToEscalate.category}</span>
-                  </p>
-                </div>
-
-                <div className="mb-6">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Escalation Reason: <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={escalationReason}
-                    onChange={(e) => setEscalationReason(e.target.value)}
-                    placeholder="Please provide a detailed reason for escalating this issue..."
-                    rows="4"
-                    className={`w-full px-4 py-2 border ${isDark ? 'border-gray-600 bg-gray-700 text-white focus:ring-orange-500' : 'border-gray-300 bg-white focus:ring-orange-500'} rounded-lg focus:ring-2 focus:border-transparent resize-none`}
-                  />
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
-                    This issue will be marked as high priority and flagged for immediate attention.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={closeEscalateModal}
-                    className={`flex-1 px-4 py-2.5 ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded-lg font-medium transition-colors cursor-pointer`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleEscalateIssue}
-                    disabled={!escalationReason.trim()}
-                    className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors cursor-pointer ${!escalationReason.trim()
-                      ? 'bg-gray-400 cursor-not-allowed text-white'
-                      : 'bg-orange-600 hover:bg-orange-700 text-white'
-                      }`}
-                  >
-                    Escalate Issue
                   </button>
                 </div>
               </div>

@@ -420,6 +420,9 @@ exports.assignIssueToAdmin = async (req, res) => {
     // The receiving admin sets that themselves when they start work.
     // If issue was previously unassigned (Pending), keep it Pending.
     issue.assignedTo = adminIdString;
+    issue.isReassignedToSuper = false;
+    issue.reassignmentReason = null;
+    issue.reassignedBy = null;
     await issue.save();
 
     // Notify newly assigned admin
@@ -491,7 +494,12 @@ exports.getIssuesByAdmin = async (req, res) => {
   }
 
   try {
-    const issues = await Issue.find({ assignedTo: adminId })
+    const issues = await Issue.find({ 
+      $or: [
+        { assignedTo: adminId },
+        { reassignedBy: adminId }
+      ]
+    })
       .populate('createdBy', 'name email mobile location profilePicture')
       .populate('assignedTo', 'name email department mobile location profilePicture');
 
@@ -698,75 +706,6 @@ exports.editIssue = async (req, res) => {
   }
 };
 
-// Escalate or de-escalate an issue (Super Admin only)
-exports.escalateIssue = async (req, res) => {
-  const { issueId } = req.params;
-  const { isEscalated, escalationReason } = req.body;
-
-  try {
-    // Check if user is logged in via session
-    if (!req.session || !req.session.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized. Please login."
-      });
-    }
-
-    // Check if the logged-in user is a super admin
-    const loggedInUser = req.session.user;
-    if (loggedInUser.role !== 'super_admin') {
-      return res.status(403).json({
-        success: false,
-        message: "Only super admin can escalate issues"
-      });
-    }
-
-    // Find issue by ID
-    const issue = await Issue.findById(issueId);
-    if (!issue) {
-      return res.status(404).json({
-        success: false,
-        message: 'Issue not found'
-      });
-    }
-
-    // Update escalation status
-    issue.isEscalated = isEscalated;
-    issue.escalationReason = isEscalated ? escalationReason : "";
-
-    // If escalating, set priority to high
-    if (isEscalated) {
-      issue.priority = 'high';
-    }
-
-    await issue.save();
-
-    // Populate fields for response
-    await issue.populate('assignedTo', 'name email department mobile location profilePicture');
-    await issue.populate('createdBy', 'name email mobile location profilePicture');
-
-    const message = isEscalated
-      ? 'Issue escalated successfully'
-      : 'Issue de-escalated successfully';
-
-    // Log Escalation Activity
-    const activityAction = isEscalated ? 'ESCALATE_ISSUE' : 'DE-ESCALATE_ISSUE';
-    logActivity(req.session.user._id || req.session.user.id, activityAction, { issueId: issue._id, reason: escalationReason }, req.ip);
-
-    res.status(200).json({
-      success: true,
-      message: message,
-      issue
-    });
-  } catch (err) {
-    console.error('Escalation error:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server Error',
-      error: err.message
-    });
-  }
-};
 
 // Reassign issue to Super Admin (Department Admin only)
 exports.reassignIssue = async (req, res) => {
@@ -807,21 +746,67 @@ exports.reassignIssue = async (req, res) => {
       });
     }
 
-    // Update issue for reassignment/escalation
-    issue.isEscalated = true;
-    issue.escalationReason = reason.trim();
+    // Update issue for reassignment to Super Admin
+    issue.isReassignedToSuper = true;
+    issue.reassignmentReason = reason.trim();
     issue.priority = 'high'; // Mark as high priority for attention
-    // Optionally unassign or keep assigned but flagged
-    // keeping assigned allows tracking who escalated it
+    
+    const previousAdminId = issue.assignedTo ? issue.assignedTo.toString() : null;
+    issue.reassignedBy = loggedInUser._id || loggedInUser.id;
+    issue.assignedTo = null;
+
+    // Add misrouting reason as a comment for everyone to see
+    issue.comments.push({
+      user: loggedInUser._id || loggedInUser.id,
+      message: `[System Note] Issue reported as misrouted. Reason: ${reason.trim()}`
+    });
 
     await issue.save();
 
     // Populate fields for response
-    await issue.populate('assignedTo', 'name email department mobile location profilePicture');
     await issue.populate('createdBy', 'name email mobile location profilePicture');
+    await issue.populate('comments.user', 'name role profilePicture');
 
-    // Log Reassignment Activity
-    logActivity(req.session.user._id || req.session.user.id, 'REASSIGN_ISSUE', { issueId: issue._id, reason: reason }, req.ip);
+    // Notify all Super Admins
+    try {
+      const superAdmins = await Users.find({ role: 'super_admin' });
+      for (const admin of superAdmins) {
+        await createNotification(
+          admin._id,
+          loggedInUser._id || loggedInUser.id,
+          'REASSIGNMENT',
+          issue._id,
+          `Issue "${issue.title}" reported as misrouted by ${loggedInUser.name}. Reason: ${reason.trim()}`
+        );
+      }
+
+      // Notify the Citizen (Creator)
+      if (issue.createdBy) {
+        await createNotification(
+          issue.createdBy._id || issue.createdBy,
+          loggedInUser._id || loggedInUser.id,
+          'MISROUTED',
+          issue._id,
+          `Your issue "${issue.title}" is being reassigned for correct routing. Reason provided: ${reason.trim()}`
+        );
+      }
+    } catch (notifErr) {
+      console.error('Notification error in reassignIssue:', notifErr);
+    }
+
+    // Log Misrouting Report Activity
+    logActivity(req.session.user._id || req.session.user.id, 'REPORT_MISROUTED', { issueId: issue._id, reason: reason }, req.ip);
+
+    // Real-time update
+    try {
+      const socketIo = socketConfig.getIo();
+      if (previousAdminId) {
+        socketIo.to(previousAdminId).emit('issue_unassigned', { issueId: issue._id.toString() });
+      }
+      socketIo.to('issues_room').emit('issue_updated', issue);
+    } catch (socketErr) {
+      console.error('Socket emit error (reassignIssue):', socketErr.message);
+    }
 
     res.status(200).json({
       success: true,

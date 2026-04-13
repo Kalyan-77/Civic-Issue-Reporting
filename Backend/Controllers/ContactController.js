@@ -1,5 +1,5 @@
 const Contact = require('../Models/Contact.js');
-const Notification = require('../Models/NotificationModel.js');
+const { createNotification } = require('./NotificationController');
 const { logActivity } = require('./ActivityController');
 
 // @desc    Submit a contact form inquiry
@@ -22,15 +22,17 @@ exports.submitContactForm = async (req, res) => {
 
         await newContact.save();
 
-        // Create notification for the admin
-        const newNotification = new Notification({
-            recipient: recipient,
-            type: 'CONTACT_INQUIRY',
-            message: `New inquiry from ${name}: ${subject}`,
-            contactId: newContact._id
-        });
-
-        await newNotification.save();
+        // Create notification for the admin using the helper (which also emits socket event)
+        const senderId = (req.session && req.session.user) ? (req.session.user.id || req.session.user._id) : null;
+        
+        await createNotification(
+            recipient,
+            senderId,
+            'CONTACT_INQUIRY',
+            null, // issueId
+            `New inquiry from ${name}: ${subject}`,
+            newContact._id // contactId
+        );
 
         // Log Activity if user is logged in
         if (req.session && req.session.user) {

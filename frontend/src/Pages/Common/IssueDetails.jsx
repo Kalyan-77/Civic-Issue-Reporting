@@ -26,6 +26,9 @@ const IssueDetails = () => {
     const [profileImgError, setProfileImgError] = useState(false);
     const [showUserModal, setShowUserModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [showReassignModal, setShowReassignModal] = useState(false);
+    const [reassignReason, setReassignReason] = useState("");
+    const [reassigning, setReassigning] = useState(false);
 
     useEffect(() => {
         setProfileImgError(false); // Reset profile image error state
@@ -123,8 +126,30 @@ const IssueDetails = () => {
         }
     };
 
-    const handleEscalate = async () => {
-        alert("Escalation feature coming soon!");
+    const handleReassignToSuper = async () => {
+        if (!reassignReason.trim()) return alert("Please provide a reason");
+        setReassigning(true);
+        try {
+            const res = await fetch(`${BASE_URL}/issue/reassign/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ reason: reassignReason.trim() }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert("Issue reassigned to Super Admin successfully");
+                navigate(-1);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.message || "Failed to reassign issue");
+            }        } catch (err) {
+            console.error("Error reassigning issue:", err);
+            alert("An error occurred. Please try again.");
+        } finally {
+            setReassigning(false);
+            setShowReassignModal(false);
+        }
     };
 
     const getStatusStyle = (status) => {
@@ -393,6 +418,16 @@ const IssueDetails = () => {
                                     <span className={`font-semibold text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Longitude:</span>
                                     <span className={`col-span-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{issue.location?.longitude?.toFixed(4)}</span>
                                 </div>
+
+                                {issue.isReassignedToSuper && (
+                                    <div className={`mt-4 p-3 rounded border flex gap-3 ${isDark ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                                        <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                                        <div className="text-xs">
+                                            <p className="font-bold uppercase mb-1">Misrouting Reported</p>
+                                            <p>{issue.reassignmentReason}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -404,12 +439,14 @@ const IssueDetails = () => {
                             >
                                 <CheckCircle className="w-4 h-4" /> Mark Resolved
                             </button>
-                            <button
-                                onClick={handleEscalate}
-                                className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-semibold text-sm shadow flex items-center justify-center gap-2 transition"
-                            >
-                                <AlertTriangle className="w-4 h-4" /> Escalate Issue
-                            </button>
+                            {user?.role === 'dept_admin' && (
+                                <button
+                                    onClick={() => setShowReassignModal(true)}
+                                    className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-md font-semibold text-sm shadow flex items-center justify-center gap-2 transition"
+                                >
+                                    <CornerUpRight className="w-4 h-4" /> Report as Misrouted
+                                </button>
+                            )}
                             <div className="relative">
                                 <button
                                     onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
@@ -571,6 +608,42 @@ const IssueDetails = () => {
                                 </div>
                             </div>
 
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Reassign Modal */}
+            {showReassignModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className={`relative w-full max-w-md rounded-xl shadow-2xl overflow-hidden p-6 ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                        <h2 className="text-xl font-bold mb-4">Report as Misrouted Category</h2>
+                        <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Provide a reason for reassigning this issue back to the Super Admin (e.g., wrong department, incorrect category).
+                        </p>
+                        <textarea
+                            className={`w-full p-3 rounded-lg border mb-4 outline-none ${isDark ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' : 'bg-gray-50 border-gray-200 focus:border-blue-500'}`}
+                            rows={4}
+                            placeholder="Reason for reassignment..."
+                            value={reassignReason}
+                            onChange={(e) => setReassignReason(e.target.value)}
+                        ></textarea>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowReassignModal(false)}
+                                className={`px-4 py-2 rounded-lg font-medium ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                disabled={reassigning}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleReassignToSuper}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+                                disabled={reassigning || !reassignReason.trim()}
+                            >
+                                {reassigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                Confirm Reassign
+                            </button>
                         </div>
                     </div>
                 </div>

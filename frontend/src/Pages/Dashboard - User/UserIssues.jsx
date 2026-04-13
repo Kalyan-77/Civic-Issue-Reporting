@@ -6,13 +6,16 @@ import {
     Tag,
     Filter,
     ChevronDown,
-    Loader2
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../Context/ThemeContext';
 import { BASE_URL } from '../../../config';
+import { useTranslation } from 'react-i18next';
 
 export default function UserIssues() {
+    const { t } = useTranslation();
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
@@ -214,12 +217,12 @@ export default function UserIssues() {
                 <div className={`rounded-3xl p-8 relative overflow-hidden ${isDark ? 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-white/10' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100'}`}>
                     <div className="relative z-10">
                         <h1 className={`text-4xl font-extrabold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {filters.state ? `Community Issues in ${filters.state}` : 'Community Issues'}
+                            {filters.state ? t('community_issues.title_with_state', { state: filters.state }) : t('community_issues.title', 'Community Issues')}
                         </h1>
                         <p className={`text-lg max-w-2xl ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
                             {filters.state || filters.area
-                                ? `Showing issues in ${[filters.area, filters.state].filter(Boolean).join(", ")}`
-                                : "Explore what's happening in your neighborhood. Stay informed about local issues and their status."}
+                                ? t('community_issues.showing_in', { location: [filters.area, filters.state].filter(Boolean).join(", ") })
+                                : t('community_issues.subtitle', "Explore what's happening in your neighborhood. Stay informed about local issues and their status.")}
                         </p>
                     </div>
                     {/* Decorative Elements */}
@@ -235,10 +238,10 @@ export default function UserIssues() {
                             </div>
                             <div>
                                 <h2 className={`font-bold text-xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                    Filter Issues
+                                    {t('community_issues.filter_title', 'Filter Issues')}
                                 </h2>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                                    Find specific issues
+                                    {t('community_issues.filter_desc', 'Find specific issues')}
                                 </p>
                             </div>
                         </div>
@@ -247,11 +250,11 @@ export default function UserIssues() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                         {/* Search */}
                         <div className="relative">
-                            <label className={labelStyles}>Search</label>
+                            <label className={labelStyles}>{t('community_issues.search_label', 'Search')}</label>
                             <Search className="absolute left-4 top-[34px] w-4 h-4 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Search title..."
+                                placeholder={t('community_issues.search_placeholder', 'Search title...')}
                                 value={filters.search}
                                 onChange={(e) => handleFilterChange('search', e.target.value)}
                                 className={`${inputStyles} pl-10`}
@@ -260,11 +263,11 @@ export default function UserIssues() {
 
                         {/* Area Filter */}
                         <div className="relative">
-                            <label className={labelStyles}>Area</label>
+                            <label className={labelStyles}>{t('community_issues.area_label', 'Area')}</label>
                             <MapPin className="absolute left-4 top-[34px] w-4 h-4 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
-                                placeholder="Filter by Area..."
+                                placeholder={t('community_issues.area_placeholder', 'Filter by Area...')}
                                 value={filters.area}
                                 onChange={(e) => handleFilterChange('area', e.target.value)}
                                 className={`${inputStyles} pl-10`}
@@ -275,61 +278,61 @@ export default function UserIssues() {
 
                         {/* Dropdowns */}
                         <div className="relative">
-                            <label className={labelStyles}>Status</label>
+                            <label className={labelStyles}>{t('community_issues.status_label', 'Status')}</label>
                             <select
                                 value={filters.status}
                                 onChange={(e) => handleFilterChange('status', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
+                                <option value="All">{t('community_issues.all_status', 'All Status')}</option>
+                                <option value="Pending">{t('common.pending', 'Pending')}</option>
+                                <option value="In Progress">{t('common.in_progress', 'In Progress')}</option>
+                                <option value="Resolved">{t('common.resolved', 'Resolved')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Category</label>
+                            <label className={labelStyles}>{t('community_issues.category_label', 'Category')}</label>
                             <select
                                 value={filters.category}
                                 onChange={(e) => handleFilterChange('category', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Categories</option>
-                                <option value="Garbage">Garbage</option>
-                                <option value="Streetlight">Streetlight</option>
-                                <option value="Pothole">Pothole</option>
-                                <option value="Water Leakage">Water Leakage</option>
-                                <option value="Other">Other</option>
+                                <option value="All">{t('community_issues.all_categories', 'All Categories')}</option>
+                                <option value="Garbage">{t('report_issue.categories.garbage', 'Garbage')}</option>
+                                <option value="Streetlight">{t('report_issue.categories.lights', 'Streetlight')}</option>
+                                <option value="Pothole">{t('report_issue.categories.pothole', 'Pothole')}</option>
+                                <option value="Water Leakage">{t('report_issue.categories.water', 'Water Leakage')}</option>
+                                <option value="Other">{t('report_issue.categories.other', 'Other')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Priority</label>
+                            <label className={labelStyles}>{t('community_issues.priority_label', 'Priority')}</label>
                             <select
                                 value={filters.priority}
                                 onChange={(e) => handleFilterChange('priority', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="All">All Priorities</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
+                                <option value="All">{t('community_issues.all_priorities', 'All Priorities')}</option>
+                                <option value="High">{t('common.high', 'High')}</option>
+                                <option value="Medium">{t('common.medium', 'Medium')}</option>
+                                <option value="Low">{t('common.low', 'Low')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
 
                         <div className="relative">
-                            <label className={labelStyles}>Sort Order</label>
+                            <label className={labelStyles}>{t('community_issues.sort_label', 'Sort Order')}</label>
                             <select
                                 value={filters.sortBy}
                                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                                 className={`${inputStyles} appearance-none cursor-pointer`}
                             >
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
+                                <option value="newest">{t('community_issues.newest', 'Newest First')}</option>
+                                <option value="oldest">{t('community_issues.oldest', 'Oldest First')}</option>
                             </select>
                             <ChevronDown className={`absolute right-4 top-[34px] w-4 h-4 pointer-events-none ${isDark ? 'text-gray-400' : 'text-slate-500'}`} />
                         </div>
@@ -341,7 +344,7 @@ export default function UserIssues() {
                     <>
                         <div className="flex items-center justify-between">
                             <p className={`text-base font-semibold ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                                Showing {filteredIssues.length} Issues
+                                {t('community_issues.showing_count', { count: filteredIssues.length })}
                             </p>
                         </div>
 
@@ -366,19 +369,25 @@ export default function UserIssues() {
 
                                         <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
                                             <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border backdrop-blur-md ${getStatusStyle(issue.status)} bg-white/90`}>
-                                                {issue.status}
+                                                {t(`common.${issue.status.toLowerCase().replace(' ', '_')}`, issue.status)}
                                             </span>
+                                            {issue.isReassignedToSuper && (
+                                                <span className="px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border backdrop-blur-md bg-red-600/90 text-white border-red-500/30 flex items-center gap-1.5">
+                                                    <AlertCircle className="w-3.5 h-3.5" />
+                                                    {t('common.misrouted', 'Misrouted')}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Bottom Overlay Info */}
                                         <div className="absolute bottom-4 left-4 right-4 text-white">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide shadow-md ${getPriorityColor(issue.priority)}`}>
-                                                    {issue.priority}
+                                                    {t(`common.${(issue.priority || 'Medium').toLowerCase()}`, issue.priority || 'Medium')}
                                                 </span>
                                                 <span className="flex items-center gap-1 text-xs font-medium bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-white border border-white/20">
                                                     <Tag className="w-3 h-3" />
-                                                    {issue.category}
+                                                    {t(`report_issue.categories.${issue.category.toLowerCase().replace(' ', '_')}`, issue.category)}
                                                 </span>
                                             </div>
                                             <h3 className="text-xl font-bold truncate shadow-black drop-shadow-md">
@@ -399,10 +408,10 @@ export default function UserIssues() {
                                                 <MapPin className={`w-5 h-5 shrink-0 mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
                                                 <div>
                                                     <p className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>
-                                                        {issue.location?.area || issue.area || 'Unknown Area'}
+                                                        {issue.location?.area || issue.area || t('community_issues.unknown_area', 'Unknown Area')}
                                                     </p>
                                                     <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>
-                                                        {issue.location?.address ? issue.location.address : 'Approximate Location'}
+                                                        {issue.location?.address ? issue.location.address : t('community_issues.approx_location', 'Approximate Location')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -411,7 +420,7 @@ export default function UserIssues() {
                                             <div className="flex items-center gap-3">
                                                 <Calendar className={`w-5 h-5 shrink-0 ${isDark ? 'text-gray-500' : 'text-slate-400'}`} />
                                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                                                    Reported on {formatDate(issue.createdAt)} by <span className="font-medium">{issue.createdBy?.name || 'Anonymous'}</span>
+                                                    {t('community_issues.reported_on', { date: formatDate(issue.createdAt), name: issue.createdBy?.name || t('community_issues.anonymous', 'Anonymous') })}
                                                 </p>
                                             </div>
                                         </div>
@@ -425,7 +434,7 @@ export default function UserIssues() {
                                                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30'
                                                     }`}
                                             >
-                                                View Details
+                                                {t('community_issues.view_details', 'View Details')}
                                             </button>
                                         </div>
                                     </div>
@@ -441,10 +450,10 @@ export default function UserIssues() {
                             <Search className="w-10 h-10" />
                         </div>
                         <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            No issues found
+                            {t('community_issues.no_issues', 'No issues found')}
                         </h3>
                         <p className={`mt-2 text-base ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                            Try adjusting your filters to find what you're looking for.
+                            {t('community_issues.no_issues_desc', "Try adjusting your filters to find what you're looking for.")}
                         </p>
                     </div>
                 )}

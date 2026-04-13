@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Calendar, Shield, Edit2, Save, X, Camera, Loader2, CheckCircle, AlertCircle, Activity, Settings, AlertTriangle, Eye, EyeOff, KeyRound, Lock } from "lucide-react";
 import { BASE_URL } from "../../../config";
 import { useTheme } from "../../Context/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,10 +27,10 @@ export default function Profile() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const pwStrengthChecks = [
-    { label: 'At least 6 characters', ok: pwForm.newPassword.length >= 6 },
-    { label: 'Uppercase letter', ok: /[A-Z]/.test(pwForm.newPassword) },
-    { label: 'Number', ok: /\d/.test(pwForm.newPassword) },
-    { label: 'Special character', ok: /[^A-Za-z0-9]/.test(pwForm.newPassword) },
+    { label: t('profile.change_pw_modal.strength_6_chars', 'At least 6 characters'), ok: pwForm.newPassword.length >= 6 },
+    { label: t('profile.change_pw_modal.strength_uppercase', 'Uppercase letter'), ok: /[A-Z]/.test(pwForm.newPassword) },
+    { label: t('profile.change_pw_modal.strength_number', 'Number'), ok: /\d/.test(pwForm.newPassword) },
+    { label: t('profile.change_pw_modal.strength_special', 'Special character'), ok: /[^A-Za-z0-9]/.test(pwForm.newPassword) },
   ];
   const pwScore = pwStrengthChecks.filter(c => c.ok).length;
   const pwColours = ['bg-gray-200', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
@@ -36,8 +38,8 @@ export default function Profile() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPwError(''); setPwSuccess('');
-    if (pwForm.newPassword !== pwForm.confirmPassword) return setPwError('New passwords do not match');
-    if (pwForm.newPassword.length < 6) return setPwError('Password must be at least 6 characters');
+    if (pwForm.newPassword !== pwForm.confirmPassword) return setPwError(t('profile.change_pw_modal.error_match', 'New passwords do not match'));
+    if (pwForm.newPassword.length < 6) return setPwError(t('profile.change_pw_modal.error_length', 'Password must be at least 6 characters'));
     setPwLoading(true);
     try {
       const userId = user?.id || user?._id;
@@ -48,8 +50,8 @@ export default function Profile() {
         credentials: 'include'
       });
       const data = await res.json();
-      if (!res.ok) return setPwError(data.message || 'Failed to change password');
-      setPwSuccess('Password changed successfully!');
+      if (!res.ok) return setPwError(data.message || t('profile.change_pw_modal.error_failed', 'Failed to change password'));
+      setPwSuccess(t('profile.change_pw_modal.success', 'Password changed successfully!'));
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => { setIsChangingPassword(false); setPwSuccess(''); }, 2000);
     } catch { setPwError('Unable to connect. Please try again.'); }
@@ -95,15 +97,15 @@ export default function Profile() {
 
   const formatActionText = (activity) => {
     switch (activity.action) {
-      case 'LOGIN': return 'Logged in to the system';
-      case 'LOGOUT': return 'Logged out';
-      case 'CREATE_ISSUE': return `Reported issue: ${activity.details?.title || 'Unknown'}`;
-      case 'UPDATE_STATUS': return `Updated issue status to ${activity.details?.status}`;
-      case 'ASSIGN_ISSUE': return `Assigned issue to admin`;
-      case 'COMMENT': return `Commented on issue`;
-      case 'ESCALATE_ISSUE': return `Escalated an issue`;
-      case 'BLOCK_USER': return `Blocked a user`;
-      case 'UNBLOCK_USER': return `Unblocked a user`;
+      case 'LOGIN': return t('profile.activities.login', 'Logged in to the system');
+      case 'LOGOUT': return t('profile.activities.logout', 'Logged out');
+      case 'CREATE_ISSUE': return t('profile.activities.create_issue', { title: activity.details?.title || 'Unknown' });
+      case 'UPDATE_STATUS': return t('profile.activities.update_status', { status: activity.details?.status });
+      case 'ASSIGN_ISSUE': return t('profile.activities.assign_issue', 'Assigned issue to admin');
+      case 'COMMENT': return t('profile.activities.comment', 'Commented on issue');
+      case 'REPORT_MISROUTED': return t('profile.activities.escalate', 'Reported issue as misrouted');
+      case 'BLOCK_USER': return t('profile.activities.block', 'Blocked a user');
+      case 'UNBLOCK_USER': return t('profile.activities.unblock', 'Unblocked a user');
       default: return activity.action.replace(/_/g, ' ');
     }
   };
@@ -111,7 +113,7 @@ export default function Profile() {
   const mapActionToType = (action) => {
     if (['LOGIN', 'LOGOUT', 'UPDATE_PROFILE'].includes(action)) return 'system';
     if (['CREATE_ISSUE', 'UPDATE_STATUS', 'ASSIGN_ISSUE', 'COMMENT'].includes(action)) return 'resolution';
-    if (['ESCALATE_ISSUE', 'BLOCK_USER', 'UNBLOCK_USER'].includes(action)) return 'alert';
+    if (['REPORT_MISROUTED', 'BLOCK_USER', 'UNBLOCK_USER'].includes(action)) return 'alert';
     return 'system';
   };
 
@@ -300,12 +302,12 @@ export default function Profile() {
   };
 
   const getRoleDisplayName = (role) => {
-    if (!role) return '👤 Citizen';
+    if (!role) return `👤 ${t('profile.roles.citizen', 'Citizen')}`;
     const roleStr = role.toString().toLowerCase();
-    if (roleStr === 'super_admin' || roleStr === 'superadmin') return '👑 Super Admin';
-    if (roleStr === 'dept_admin' || roleStr === 'deptadmin') return '🛡️ Dept Admin';
-    if (roleStr === 'admin') return '👑 Admin';
-    return '👤 Citizen';
+    if (roleStr === 'super_admin' || roleStr === 'superadmin') return `👑 ${t('profile.roles.super_admin', 'Super Admin')}`;
+    if (roleStr === 'dept_admin' || roleStr === 'deptadmin') return `🛡️ ${t('profile.roles.dept_admin', 'Dept Admin')}`;
+    if (roleStr === 'admin') return `👑 ${t('profile.roles.admin', 'Admin')}`;
+    return `👤 ${t('profile.roles.citizen', 'Citizen')}`;
   };
 
   if (loading) {
@@ -313,8 +315,7 @@ export default function Profile() {
       <div className={`flex items-center justify-center min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Loading your profile...</p>
-        </div>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('profile.loading', 'Loading your profile...')}</p>        </div>
       </div>
     );
   }
@@ -415,7 +416,7 @@ export default function Profile() {
                     </span>
                     {user.isMainAdmin && (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${isDark ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                        ⭐ Main Admin
+                        ⭐ {t('profile.roles.admin', 'Main Admin')}
                       </span>
                     )}
                   </div>
@@ -424,13 +425,13 @@ export default function Profile() {
                 <div className={`mt-6 pt-6 border-t ${isDark ? 'border-gray-700' : 'border-slate-100'}`}>
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <p className={`text-xs uppercase font-bold tracking-wider mb-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Account ID</p>
+                      <p className={`text-xs uppercase font-bold tracking-wider mb-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{t('profile.account_id', 'Account ID')}</p>
                       <p className={`font-mono text-xs truncate ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>#{user.id?.slice(-6) || user._id?.slice(-6)}</p>
                     </div>
                     <div>
-                      <p className={`text-xs uppercase font-bold tracking-wider mb-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>Member Since</p>
+                      <p className={`text-xs uppercase font-bold tracking-wider mb-1 ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{t('profile.member_since', 'Member Since')}</p>
                       <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                        {user.createdAt ? new Date(user.createdAt).getFullYear() : 'N/A'}
+                        {user.createdAt ? new Date(user.createdAt).getFullYear() : t('profile.not_specified', 'N/A')}
                       </p>
                     </div>
                   </div>
@@ -445,8 +446,8 @@ export default function Profile() {
                   <Shield className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Status</h3>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Your account is active and secure</p>
+                  <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('profile.account_status', 'Account Status')}</h3>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{t('profile.account_active', 'Your account is active and secure')}</p>
                 </div>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
@@ -459,7 +460,7 @@ export default function Profile() {
           <div className="lg:col-span-8">
             <div className={`rounded-3xl shadow-xl overflow-hidden backdrop-blur-md border h-full ${isDark ? 'bg-gray-800/60 border-gray-700' : 'bg-white/80 border-white/50'}`}>
               <div className={`p-6 border-b flex items-center justify-between ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Personal Information</h3>
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('profile.title', 'Personal Information')}</h3>
                 {!editing ? (
                   <button
                     onClick={() => setEditing(true)}
@@ -469,7 +470,7 @@ export default function Profile() {
                       }`}
                   >
                     <Edit2 className="w-4 h-4" />
-                    Edit Profile
+                    {t('profile.edit_btn', 'Edit Profile')}
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -482,7 +483,7 @@ export default function Profile() {
                         }`}
                     >
                       <X className="w-4 h-4" />
-                      Cancel
+                      {t('profile.cancel_btn', 'Cancel')}
                     </button>
                     <button
                       onClick={handleSave}
@@ -493,7 +494,7 @@ export default function Profile() {
                         }`}
                     >
                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      {saving ? t('profile.saving_btn', 'Saving...') : t('profile.save_btn', 'Save Changes')}
                     </button>
                   </div>
                 )}
@@ -503,7 +504,7 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Full Name */}
                   <div className="md:col-span-2">
-                    <label className={labelClasses}>Full Name</label>
+                    <label className={labelClasses}>{t('profile.full_name', 'Full Name')}</label>
                     {editing ? (
                       <input
                         type="text"
@@ -522,7 +523,7 @@ export default function Profile() {
 
                   {/* Email */}
                   <div>
-                    <label className={labelClasses}>Email Address</label>
+                    <label className={labelClasses}>{t('profile.email_address', 'Email Address')}</label>
                     {editing ? (
                       <input
                         type="email"
@@ -541,7 +542,7 @@ export default function Profile() {
 
                   {/* Mobile */}
                   <div>
-                    <label className={labelClasses}>Mobile Number</label>
+                    <label className={labelClasses}>{t('profile.mobile_number', 'Mobile Number')}</label>
                     {editing ? (
                       <input
                         type="tel"
@@ -560,7 +561,7 @@ export default function Profile() {
 
                   {/* Location */}
                   <div className="md:col-span-2">
-                    <label className={labelClasses}>Location</label>
+                    <label className={labelClasses}>{t('profile.location', 'Location')}</label>
                     {editing ? (
                       <input
                         type="text"
@@ -574,7 +575,7 @@ export default function Profile() {
                       <div className={`text-lg font-medium flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-gray-900/50 border-gray-700 text-gray-200' : 'bg-gray-50 border-transparent text-gray-900'}`}>
                         <MapPin className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                         <div className="flex flex-col">
-                          <span>{user.location?.address || "Not specified"}</span>
+                          <span>{user.location?.address || t('profile.not_specified', 'Not specified')}</span>
                           {(user.location?.area || user.location?.state) && (
                             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                               {[user.location?.area, user.location?.state].filter(Boolean).join(", ")}
@@ -587,7 +588,7 @@ export default function Profile() {
 
                   {/* State Field */}
                   <div>
-                    <label className={labelClasses}>State</label>
+                    <label className={labelClasses}>{t('profile.state', 'State')}</label>
                     {editing ? (
                       <input
                         type="text"
@@ -600,14 +601,14 @@ export default function Profile() {
                     ) : (
                       <div className={`text-lg font-medium flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-gray-900/50 border-gray-700 text-gray-200' : 'bg-gray-50 border-transparent text-gray-900'}`}>
                         <MapPin className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                        {user.location?.state || "Not specified"}
+                        {user.location?.state || t('profile.not_specified', 'Not specified')}
                       </div>
                     )}
                   </div>
 
                   {/* Area Field */}
                   <div>
-                    <label className={labelClasses}>Area</label>
+                    <label className={labelClasses}>{t('profile.area', 'Area')}</label>
                     {editing ? (
                       <input
                         type="text"
@@ -620,7 +621,7 @@ export default function Profile() {
                     ) : (
                       <div className={`text-lg font-medium flex items-center gap-3 p-3 rounded-xl border ${isDark ? 'bg-gray-900/50 border-gray-700 text-gray-200' : 'bg-gray-50 border-transparent text-gray-900'}`}>
                         <MapPin className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                        {user.location?.area || "Not specified"}
+                        {user.location?.area || t('profile.not_specified', 'Not specified')}
                       </div>
                     )}
                   </div>
@@ -629,7 +630,7 @@ export default function Profile() {
                 {/* Security Section */}
                 <div className="mt-10">
                   <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 border-b pb-2 ${isDark ? 'text-gray-400 border-gray-700' : 'text-gray-500 border-gray-100'}`}>
-                    Security & Privacy
+                    {t('profile.security_title', 'Security & Privacy')}
                   </h4>
                   <div className={`rounded-xl p-5 border flex flex-col sm:flex-row items-center justify-between gap-4 ${isDark ? 'bg-blue-900/10 border-blue-900/30' : 'bg-blue-50 border-blue-100'}`}>
                     <div className="flex items-center gap-4">
@@ -637,8 +638,8 @@ export default function Profile() {
                         <Lock className="w-6 h-6" />
                       </div>
                       <div>
-                        <h5 className={`font-bold ${isDark ? 'text-gray-200' : 'text-slate-900'}`}>Password</h5>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Keep your account secure</p>
+                        <h5 className={`font-bold ${isDark ? 'text-gray-200' : 'text-slate-900'}`}>{t('profile.password_label', 'Password')}</h5>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{t('profile.password_desc', 'Keep your account secure')}</p>
                       </div>
                     </div>
                     <button
@@ -648,7 +649,7 @@ export default function Profile() {
                         : 'bg-white hover:bg-gray-50 text-slate-700 border border-gray-200 shadow-sm'
                         }`}>
                       <KeyRound className="w-4 h-4" />
-                      Change Password
+                      {t('profile.change_password_btn', 'Change Password')}
                     </button>
                   </div>
                 </div>
@@ -656,7 +657,7 @@ export default function Profile() {
                 {/* Activity Log Section */}
                 <div className="mt-10">
                   <h4 className={`text-sm font-bold uppercase tracking-wider mb-4 border-b pb-2 ${isDark ? 'text-gray-400 border-gray-700' : 'text-gray-500 border-gray-100'}`}>
-                    Recent Activity
+                    {t('profile.recent_activity', 'Recent Activity')}
                   </h4>
                   <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border p-6 flex flex-col`}>
                     <div className="flex-1 flow-root">
@@ -695,7 +696,7 @@ export default function Profile() {
                           ))}
                         </ul>
                       ) : (
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-4`}>No recent activity found.</p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} text-center py-4`}>{t('profile.no_activity', 'No recent activity found.')}</p>
                       )}
                     </div>
                   </div>
@@ -715,7 +716,7 @@ export default function Profile() {
             <div className={`p-6 border-b ${isDark ? 'border-gray-700' : 'border-gray-100'} flex justify-between items-center`}>
               <div className="flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-blue-600" />
-                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Change Password</h3>
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('profile.change_pw_modal.title', 'Change Password')}</h3>
               </div>
               <button onClick={() => setIsChangingPassword(false)} className={`${isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'} transition-colors`}>
                 <X className="w-5 h-5" />
@@ -736,12 +737,12 @@ export default function Profile() {
 
               {/* Current Password */}
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Current Password</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>{t('profile.change_pw_modal.current_pw', 'Current Password')}</label>
                 <div className="relative">
                   <input type={showCurrent ? 'text' : 'password'} value={pwForm.currentPassword}
                     onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })}
                     className={`w-full px-4 py-2.5 pr-10 border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm`}
-                    placeholder="Enter current password" required />
+                    placeholder={t('profile.change_pw_modal.placeholder_current', 'Enter current password')} required />
                   <button type="button" onClick={() => setShowCurrent(!showCurrent)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -751,12 +752,12 @@ export default function Profile() {
 
               {/* New Password */}
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>New Password</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>{t('profile.change_pw_modal.new_pw', 'New Password')}</label>
                 <div className="relative">
                   <input type={showNew ? 'text' : 'password'} value={pwForm.newPassword}
                     onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })}
                     className={`w-full px-4 py-2.5 pr-10 border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm`}
-                    placeholder="Min. 6 characters" required />
+                    placeholder={t('profile.change_pw_modal.placeholder_new', 'Min. 6 characters')} required />
                   <button type="button" onClick={() => setShowNew(!showNew)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -782,12 +783,12 @@ export default function Profile() {
 
               {/* Confirm Password */}
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Confirm New Password</label>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>{t('profile.change_pw_modal.confirm_pw', 'Confirm New Password')}</label>
                 <div className="relative">
                   <input type={showConfirm ? 'text' : 'password'} value={pwForm.confirmPassword}
                     onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
                     className={`w-full px-4 py-2.5 pr-10 border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm`}
-                    placeholder="Re-enter new password" required />
+                    placeholder={t('profile.change_pw_modal.placeholder_confirm', 'Re-enter new password')} required />
                   <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -795,7 +796,7 @@ export default function Profile() {
                 </div>
                 {pwForm.confirmPassword && (
                   <p className={`text-xs mt-1 ${pwForm.newPassword === pwForm.confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
-                    {pwForm.newPassword === pwForm.confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                    {pwForm.newPassword === pwForm.confirmPassword ? `✓ ${t('profile.change_pw_modal.pw_match', 'Passwords match')}` : `✗ ${t('profile.change_pw_modal.pw_no_match', 'Passwords do not match')}`}
                   </p>
                 )}
               </div>

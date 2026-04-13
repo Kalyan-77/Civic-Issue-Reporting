@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../Context/ThemeContext';
 import { BASE_URL } from '../../../config';
+import { useTranslation } from 'react-i18next';
 import LeafletMap from '../../Components/LeafletMap';
 
 export default function UserIssueDetails() {
+    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const { isDark } = useTheme();
@@ -142,10 +144,10 @@ export default function UserIssueDetails() {
 
             if (res.ok) {
                 setIsDeleteModalOpen(false);
-                showNotification('Issue deleted successfully. Redirecting...', 'success');
+                showNotification(t('issue_details.success_delete', 'Issue deleted successfully. Redirecting...'), 'success');
                 setTimeout(() => navigate('/citizen'), 1500);
             } else {
-                showNotification('Failed to delete issue.', 'error');
+                showNotification(t('issue_details.error_delete', 'Failed to delete issue.'), 'error');
                 setIsSubmitting(false);
             }
         } catch (error) {
@@ -167,26 +169,26 @@ export default function UserIssueDetails() {
     if (!issue) {
         return (
             <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col items-center justify-center`}>
-                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>Issue Not Found</h2>
+                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('dashboard.no_issues', 'Issue Not Found')}</h2>
                 <button
                     onClick={() => navigate('/citizen')}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    Back to Dashboard
+                    {t('issue_details.back_to_issues', 'Back to Dashboard')}
                 </button>
             </div>
         );
     }
 
     const steps = [
-        { label: 'Reported', date: issue.createdAt, status: 'completed' },
+        { label: t('issue_details.reported_step', 'Reported'), date: issue.createdAt, status: 'completed' },
         {
-            label: 'In Progress',
+            label: t('issue_details.in_progress_step', 'In Progress'),
             status: ['In Progress', 'Resolved'].includes(issue.status) ? 'completed' : 'pending',
             date: issue.status === 'In Progress' ? issue.updatedAt : null
         },
         {
-            label: 'Resolved',
+            label: t('issue_details.resolved_step', 'Resolved'),
             status: issue.status === 'Resolved' ? 'completed' : 'pending',
             date: issue.resolvedAt
         }
@@ -234,9 +236,9 @@ export default function UserIssueDetails() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column: Basic Details */}
                 <div className="space-y-4">
-                    <h4 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Basic Details</h4>
+                    <h4 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{t('issue_details.basic_details', 'Basic Details')}</h4>
                     <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Title</label>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('dashboard.filter.search_label', 'Title')}</label>
                         <input
                             type="text"
                             name="title"
@@ -248,7 +250,7 @@ export default function UserIssueDetails() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Category</label>
+                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('dashboard.filter.category_label', 'Category')}</label>
                             <select
                                 name="category"
                                 value={editFormData.category}
@@ -256,15 +258,15 @@ export default function UserIssueDetails() {
                                 className={`w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                                     }`}
                             >
-                                <option value="Garbage">Garbage</option>
-                                <option value="Streetlight">Streetlight</option>
-                                <option value="Pothole">Pothole</option>
-                                <option value="Water Leakage">Water Leakage</option>
-                                <option value="Other">Other</option>
+                                <option value="Garbage">{t('report_issue.categories.garbage', 'Garbage')}</option>
+                                <option value="Streetlight">{t('report_issue.categories.lights', 'Streetlight')}</option>
+                                <option value="Pothole">{t('report_issue.categories.pothole', 'Pothole')}</option>
+                                <option value="Water Leakage">{t('report_issue.categories.water', 'Water Leakage')}</option>
+                                <option value="Other">{t('report_issue.categories.other', 'Other')}</option>
                             </select>
                         </div>
                         <div>
-                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Priority</label>
+                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('dashboard.filter.priority_label', 'Priority')}</label>
                             <select
                                 name="priority"
                                 value={editFormData.priority}
@@ -272,14 +274,14 @@ export default function UserIssueDetails() {
                                 className={`w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                                     }`}
                             >
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
+                                <option value="High">{t('dashboard.filter.high', 'High')}</option>
+                                <option value="Medium">{t('dashboard.filter.medium', 'Medium')}</option>
+                                <option value="Low">{t('dashboard.filter.low', 'Low')}</option>
                             </select>
                         </div>
                     </div>
                     <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Description</label>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('issue_details.description_title', 'Description')}</label>
                         <textarea
                             name="description"
                             value={editFormData.description}
@@ -293,9 +295,9 @@ export default function UserIssueDetails() {
 
                 {/* Right Column: Location Details */}
                 <div className="space-y-4">
-                    <h4 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Location Details</h4>
+                    <h4 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>{t('issue_details.location_details', 'Location Details')}</h4>
                     <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Area / Place Name</label>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('issue_details.location_details', 'Area / Place Name')}</label>
                         <input
                             type="text"
                             name="area"
@@ -306,7 +308,7 @@ export default function UserIssueDetails() {
                         />
                     </div>
                     <div>
-                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>Full Address</label>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>{t('issue_details.location_details', 'Full Address')}</label>
                         <textarea
                             name="address"
                             value={editFormData.address}
@@ -350,7 +352,7 @@ export default function UserIssueDetails() {
                         }`}
                     disabled={isSubmitting}
                 >
-                    Cancel
+                    {t('settings.tabs.general.cancel_btn', 'Cancel')}
                 </button>
                 <button
                     onClick={submitEdit}
@@ -358,7 +360,7 @@ export default function UserIssueDetails() {
                     className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                    Save Changes
+                    {t('issue_details.save_changes', 'Save Changes')}
                 </button>
             </div>
         </div>
@@ -369,9 +371,9 @@ export default function UserIssueDetails() {
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trash2 className="w-8 h-8" />
             </div>
-            <h4 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Delete Issue?</h4>
+            <h4 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('issue_details.delete_confirm_title', 'Delete Issue?')}</h4>
             <p className={`mb-8 max-w-sm mx-auto ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
-                Are you sure you want to delete this issue? This action cannot be undone and will remove it permanently.
+                {t('issue_details.delete_confirm_desc', 'Are you sure you want to delete this issue? This action cannot be undone and will remove it permanently.')}
             </p>
             <div className="flex justify-center gap-4">
                 <button
@@ -388,7 +390,7 @@ export default function UserIssueDetails() {
                     className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium shadow-lg shadow-red-500/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
-                    Delete Issue
+                    {t('issue_details.delete_issue', 'Delete Issue')}
                 </button>
             </div>
         </div>
@@ -419,7 +421,7 @@ export default function UserIssueDetails() {
                                 }`}
                         >
                             <ArrowLeft className="w-5 h-5" />
-                            <span>Back to Issues</span>
+                            <span>{t('issue_details.back_to_issues', 'Back to Issues')}</span>
                         </button>
                     </div>
 
@@ -454,6 +456,20 @@ export default function UserIssueDetails() {
 
                     {/* Main Content (Image & Details) */}
                     <div className="lg:col-span-8 flex flex-col gap-6">
+                        {/* Misrouting Alert (Simplified for Citizen) */}
+                        {issue.isReassignedToSuper && (
+                            <div className={`p-4 rounded-3xl border-l-4 flex gap-4 ${isDark ? 'bg-gray-800 border-red-500 text-gray-200' : 'bg-white border-red-500 text-gray-800'} shadow-md`}>
+                                <div className="text-red-500">
+                                    <AlertCircle className="w-6 h-6" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-extrabold text-sm uppercase tracking-tight mb-0.5">{t('issue_details.correcting_routing_title', 'Correcting Issue Routing')}</h4>
+                                    <p className="text-sm opacity-90 font-medium">
+                                        {issue.reassignmentReason || t('issue_details.correcting_routing_fallback', 'Your issue is being reassigned to the correct department for faster resolution.')}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Hero Image Card */}
                         <div className={`relative rounded-3xl overflow-hidden shadow-sm border group h-[400px] ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
@@ -476,11 +492,16 @@ export default function UserIssueDetails() {
                                             }`}>
                                             {issue.status}
                                         </span>
+                                        {issue.isReassignedToSuper && (
+                                            <span className="px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border bg-red-600/20 border-red-400 text-red-300">
+                                                Misrouted
+                                            </span>
+                                        )}
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border ${issue.priority === 'High'
                                             ? 'bg-red-500/20 border-red-400 text-red-300'
                                             : 'bg-gray-500/20 border-gray-400 text-gray-300'
                                             }`}>
-                                            {issue.priority} Priority
+                                            {t('issue_details.priority_tag', { priority: issue.priority })}
                                         </span>
                                         <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/10 backdrop-blur-md border border-white/20 text-white">
                                             <Tag className="w-3 h-3" />
@@ -509,7 +530,7 @@ export default function UserIssueDetails() {
                         {/* Description Info */}
                         <div className={`p-8 rounded-3xl shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
                             <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                Description
+                                {t('issue_details.description_title', 'Description')}
                             </h3>
                             <p className={`text-lg leading-relaxed ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
                                 {issue.description}
@@ -519,7 +540,7 @@ export default function UserIssueDetails() {
                         {/* Comments Placeholder */}
                         <div className={`p-8 rounded-3xl shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
                             <h3 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                Updates & Comments
+                                {t('issue_details.updates_title', 'Updates & Comments')}
                             </h3>
                             {issue.comments && issue.comments.length > 0 ? (
                                 <div className="space-y-4">
@@ -555,7 +576,7 @@ export default function UserIssueDetails() {
                                                             ? 'bg-red-500 text-white shadow-sm shadow-red-500/20'
                                                             : 'bg-blue-500 text-white shadow-sm shadow-blue-500/20'
                                                             }`}>
-                                                            Official Response
+                                                            {t('issue_details.official_response', 'Official Response')}
                                                         </span>
                                                     )}
                                                 </div>
@@ -568,7 +589,7 @@ export default function UserIssueDetails() {
                                 </div>
                             ) : (
                                 <div className={`text-center py-8 rounded-xl border border-dashed ${isDark ? 'border-gray-700 text-gray-500' : 'border-slate-200 text-slate-400'}`}>
-                                    <p>No updates yet.</p>
+                                    <p>{t('issue_details.no_updates', 'No updates yet.')}</p>
                                 </div>
                             )}
                         </div>
@@ -580,9 +601,9 @@ export default function UserIssueDetails() {
                         {/* Progress Status */}
                         <div className={`p-6 rounded-3xl shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Status Timeline</h3>
+                                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('issue_details.timeline_title', 'Status Timeline')}</h3>
                                 <span className={`text-xs font-bold px-2 py-1 rounded bg-blue-300 text-white dark:bg-blue-900 dark:text-white`}>
-                                    Tracking ID: #{issue._id.slice(-6).toUpperCase()}
+                                    {t('issue_details.tracking_id', { id: issue._id.slice(-6).toUpperCase() })}
                                 </span>
                             </div>
 
@@ -622,7 +643,7 @@ export default function UserIssueDetails() {
                         {/* Location Details */}
                         <div className={`p-6 rounded-3xl shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}>
                             <h3 className={`text-lg font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                Location Details
+                                {t('issue_details.location_title', 'Location Details')}
                             </h3>
 
                             <div className={`mb-4 flex items-start gap-3 p-4 rounded-xl ${isDark ? 'bg-gray-700/30' : 'bg-slate-50'}`}>
@@ -652,7 +673,7 @@ export default function UserIssueDetails() {
                                 className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                             >
                                 <Navigation className="w-4 h-4" />
-                                View Route on Google Maps
+                                {t('issue_details.view_on_maps', 'View Route on Google Maps')}
                             </button>
                         </div>
 
@@ -661,9 +682,9 @@ export default function UserIssueDetails() {
                             <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3 ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-500'}`}>
                                 <AlertCircle className="w-6 h-6" />
                             </div>
-                            <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>Need Help?</h4>
+                            <h4 className={`text-sm font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('issue_details.need_help', 'Need Help?')}</h4>
                             <p className={`text-xs mb-4 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                                If this issue is critical or taking too long, contact support.
+                                {t('issue_details.help_desc', 'If this issue is critical or taking too long, contact support.')}
                             </p>
                             <button
                                 onClick={() => navigate('/citizen/contact')}
@@ -672,7 +693,7 @@ export default function UserIssueDetails() {
                                     : 'border-slate-300 text-slate-600 hover:bg-white hover:shadow-sm'
                                     }`}
                             >
-                                Contact Support
+                                {t('issue_details.contact_support', 'Contact Support')}
                             </button>
                         </div>
 
@@ -684,7 +705,7 @@ export default function UserIssueDetails() {
             <Modal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                title="Edit Issue Details"
+                title={t('issue_details.edit_issue_title', 'Edit Issue Details')}
             >
                 <EditModalContent />
             </Modal>
@@ -692,7 +713,7 @@ export default function UserIssueDetails() {
             <Modal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
-                title="Confirm Deletion"
+                title={t('issue_details.confirm_delete_title', 'Confirm Deletion')}
             >
                 <DeleteModalContent />
             </Modal>

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { BASE_URL } from '../../../config';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '../../Components/LanguageSelector';
 
 export default function Navbar() {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -163,20 +166,21 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
             <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors">
-              Features
+              {t('nav.features', 'Features')}
             </a>
             <a href="#how-it-works" className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors">
-              How It Works
+              {t('nav.how_it_works', 'How It Works')}
             </a>
             <a href="#categories" className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors">
-              Categories
+              {t('nav.categories', 'Categories')}
             </a>
             <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors">
-              About Us
+              {t('nav.about', 'About Us')}
             </a>
             <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors">
-              Contact
+              {t('nav.contact', 'Contact')}
             </a>
+            <LanguageSelector />
           </div>
 
           {/* Auth Section - Desktop */}
@@ -189,7 +193,7 @@ export default function Navbar() {
                   className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors cursor-pointer"
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  <span>Dashboard</span>
+                  <span>{t('common.dashboard', 'Dashboard')}</span>
                 </button>
 
                 {/* Profile Dropdown */}
@@ -222,14 +226,14 @@ export default function Navbar() {
                         className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                       >
                         <User className="w-4 h-4" />
-                        <span>My Profile</span>
+                        <span>{t('common.profile', 'My Profile')}</span>
                       </button>
                       <button
                         onClick={navigateToDashboard}
                         className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                       >
                         <LayoutDashboard className="w-4 h-4" />
-                        <span>Dashboard</span>
+                        <span>{t('common.dashboard', 'Dashboard')}</span>
                       </button>
                       <div className="border-t border-gray-100 mt-2 pt-2">
                         <button
@@ -237,7 +241,7 @@ export default function Navbar() {
                           className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         >
                           <LogOut className="w-4 h-4" />
-                          <span>Logout</span>
+                          <span>{t('common.logout', 'Logout')}</span>
                         </button>
                       </div>
                     </div>
@@ -251,25 +255,28 @@ export default function Navbar() {
                   className="px-5 py-2.5 text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors cursor-pointer"
                   onClick={() => window.location.href = '/login'}
                 >
-                  Sign In
+                  {t('common.login', 'Sign In')}
                 </button>
                 <button
                   className="px-6 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                   onClick={() => window.location.href = '/register'}
                 >
-                  Get Started
+                  {t('common.get_started', 'Get Started')}
                 </button>
               </>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="lg:hidden flex items-center space-x-4">
+            <LanguageSelector />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}

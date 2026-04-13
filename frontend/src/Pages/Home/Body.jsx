@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Users, Zap, Shield, BarChart3, AlertCircle, Trash2, TreePine, Wrench, ArrowRight, CheckCircle, Phone, Mail, MapPinned, Github, Linkedin, Twitter, Plus, LayoutDashboard, Settings } from 'lucide-react';
 import { BASE_URL } from '../../../config';
+import { useTranslation } from 'react-i18next';
 
 export default function Body() {
+  const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null); // 'citizen' or 'dept_admin'
   const [loading, setLoading] = useState(true);
@@ -98,9 +100,9 @@ export default function Body() {
   };
 
   const stats = [
-    { value: heroStats.resolvedIssues, label: 'Issues Resolved' },
-    { value: heroStats.activeCitizens, label: 'Active Citizens' },
-    { value: heroStats.avgResponse, label: 'Avg Response' }
+    { value: heroStats.resolvedIssues, label: t('home.resolved_issues', 'Issues Resolved') },
+    { value: heroStats.activeCitizens, label: t('home.active_citizens', 'Active Citizens') },
+    { value: heroStats.avgResponse, label: t('home.avg_response', 'Avg Response') }
   ];
 
   const features = [
@@ -287,11 +289,11 @@ export default function Body() {
             <div className="space-y-8">
               <div className="space-y-6">
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Report Issues,<br />
-                  <span className="text-blue-600">Transform</span> Your Community
+                  {t('home.hero_title_1', 'Report Issues,')}<br />
+                  <span className="text-blue-600">{t('home.hero_title_2', 'Transform')}</span> {t('home.hero_title_3', 'Your Community')}
                 </h1>
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  Help build safer, cleaner neighborhoods by reporting infrastructure issues. From potholes to broken streetlights, your voice matters.
+                  {t('home.hero_subtitle', 'Help build safer, cleaner neighborhoods by reporting infrastructure issues.')}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -352,10 +354,10 @@ export default function Body() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Powerful Features for Better Communities
+              {t('home.features_title', 'Powerful Features for Better Communities')}
             </h2>
             <p className="text-lg text-gray-600">
-              Everything you need to report, track, and resolve civic issues efficiently and effectively.
+              {t('home.features_subtitle', 'Everything you need to report, track, and resolve civic issues efficiently and effectively.')}
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -377,10 +379,10 @@ export default function Body() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              What Can You Report?
+              {t('home.categories_title', 'What Can You Report?')}
             </h2>
             <p className="text-lg text-gray-600">
-              Our platform covers a wide range of civic issues to help keep your community safe and well-maintained.
+              {t('home.categories_subtitle', 'Our platform covers a wide range of civic issues to help keep your community safe and well-maintained.')}
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
@@ -445,20 +447,20 @@ export default function Body() {
       <section className="py-20 bg-blue-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
-            Ready to Make a Difference?
+            {t('home.cta_title', 'Ready to Make a Difference?')}
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of active citizens working together to build better, safer communities.
+            {t('home.cta_subtitle', 'Join thousands of active citizens working together to build better, safer communities.')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleGetStarted}
               className="px-8 py-4 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
-              Get Started Now
+              {t('home.cta_btn', 'Get Started Now')}
             </button>
             <button className="px-8 py-4 bg-blue-700 text-white font-medium rounded-lg hover:bg-blue-800 transition-colors border-2 border-blue-500 cursor-pointer">
-              Learn More
+              {t('home.cta_learn', 'Learn More')}
             </button>
           </div>
         </div>
