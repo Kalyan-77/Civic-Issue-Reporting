@@ -20,7 +20,7 @@ const Analytics = () => {
 
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState({
-    totalIssues: 0, pendingIssues: 0, inProgressIssues: 0, resolvedIssues: 0, criticalIssues: 0, escalatedIssues: 0
+    totalIssues: 0, pendingIssues: 0, inProgressIssues: 0, resolvedIssues: 0, criticalIssues: 0, misroutedIssues: 0
   });
   const [categoryData, setCategoryData] = useState([]);
   const [statusData, setStatusData] = useState([]);
@@ -38,7 +38,7 @@ const Analytics = () => {
     { name: 'Traffic', time: 4.5 },
   ]);
 
-  const [escalations, setEscalations] = useState({
+  const [misroutingData, setMisroutingData] = useState({
     total: 0,
     byCategory: [],
     reasons: []
@@ -84,7 +84,7 @@ const Analytics = () => {
           axios.get(`${BASE_URL}/analytics/issues-by-status`, config),
           axios.get(`${BASE_URL}/analytics/issues-over-time`, config),
           axios.get(`${BASE_URL}/analytics/admin-performance`, config),
-          axios.get(`${BASE_URL}/analytics/escalations`, config),
+          axios.get(`${BASE_URL}/analytics/misrouted`, config),
           axios.get(`${BASE_URL}/analytics/category-resolution`, config),
           axios.get(`${BASE_URL}/analytics/issues-by-area`, config)
         ]);
@@ -120,8 +120,8 @@ const Analytics = () => {
         }
 
         if (escRes.data.success) {
-          setEscalations({
-            total: escRes.data.data.totalEscalated,
+          setMisroutingData({
+            total: escRes.data.data.totalMisrouted,
             byCategory: escRes.data.data.byCategory,
             reasons: escRes.data.data.byReason
           });
@@ -139,9 +139,10 @@ const Analytics = () => {
 
   const COLORS = ['#FFBB28', '#FF8042', '#00C49F', '#0088FE'];
   const STATUS_COLORS = {
-    'Pending': '#FFBB28',
-    'In Progress': '#FF8042',
-    'Resolved': '#00C49F'
+    'Pending': '#EAB308',     // Yellow
+    'In Progress': '#3B82F6',   // Blue
+    'Resolved': '#22C55E',     // Green
+    'Misrouted': '#EC4899',    // Pink
   };
 
   if (loading) return <div className={`flex justify-center items-center h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Loading Analytics...</div>;
@@ -188,7 +189,7 @@ const Analytics = () => {
         <StatCard icon={<Settings size={24} />} label="In Progress" value={overview.inProgressIssues} color="bg-orange-500" />
         <StatCard icon={<CheckCircle size={24} />} label="Resolved" value={overview.resolvedIssues} color="bg-green-600" />
         <StatCard icon={<AlertTriangle size={24} />} label="Critical" value={overview.criticalIssues} color="bg-red-500" />
-        <StatCard icon={<AlertTriangle size={24} />} label="Escalated" value={overview.escalatedIssues} color="bg-amber-600" />
+        <StatCard icon={<AlertTriangle size={24} />} label="Misrouted" value={overview.misroutedIssues} color="bg-amber-600" />
       </div>
 
       {/* Issue Trends Chart (New) */}
@@ -370,17 +371,17 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Escalations Overview - Data Quality Issues */}
+        {/* Misrouting Overview */}
         <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-xl shadow-sm border transition-colors duration-200`}>
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Issues Requiring Review</h3>
-              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>Flagged for incomplete data</p>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1`}>Issues flagged for redirection</p>
             </div>
             <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
           </div>
           
-          {/* Total Escalated Issues - Highlighted Card */}
+          {/* Total Misrouted Issues - Highlighted Card */}
           <div className={`${isDark ? 'bg-amber-900/20 border-amber-900/50' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4 mb-5`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -388,8 +389,8 @@ const Analytics = () => {
                   <AlertTriangle className="text-amber-600" size={24} />
                 </div>
                 <div>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Pending Review</p>
-                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{escalations.total}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} uppercase tracking-wide`}>Pending Re-routing</p>
+                  <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{misroutingData.total}</p>
                 </div>
               </div>
             </div>
@@ -402,9 +403,9 @@ const Analytics = () => {
               By Category
             </h4>
             <div className={`space-y-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              {escalations.byCategory && escalations.byCategory.length > 0 ? (
-                escalations.byCategory.map((cat, idx) => {
-                  const percentage = escalations.total > 0 ? ((cat.count / escalations.total) * 100).toFixed(1) : 0;
+              {misroutingData.byCategory && misroutingData.byCategory.length > 0 ? (
+                misroutingData.byCategory.map((cat, idx) => {
+                  const percentage = misroutingData.total > 0 ? ((cat.count / misroutingData.total) * 100).toFixed(1) : 0;
                   return (
                     <div key={idx} className={`${isDark ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg p-3`}>
                       <div className="flex justify-between items-center mb-2">
@@ -427,7 +428,7 @@ const Analytics = () => {
                 })
               ) : (
                 <div className={`text-center py-4 ${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>
-                  No escalations by category
+                  No misrouted issues by category
                 </div>
               )}
             </div>
@@ -437,11 +438,11 @@ const Analytics = () => {
           <div>
             <h4 className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3 flex items-center gap-2`}>
               <div className={`w-1 h-4 ${isDark ? 'bg-orange-500' : 'bg-orange-600'} rounded`}></div>
-              Common Data Quality Issues
+              Common Misrouting Reasons
             </h4>
             <div className={`space-y-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              {escalations.reasons && escalations.reasons.length > 0 ? (
-                escalations.reasons.map((r, i) => (
+              {misroutingData.reasons && misroutingData.reasons.length > 0 ? (
+                misroutingData.reasons.map((r, i) => (
                   <div key={i} className={`flex justify-between items-center ${isDark ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50'} p-2 rounded transition-colors`}>
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-full ${isDark ? 'bg-orange-900/50 text-orange-400' : 'bg-orange-100 text-orange-700'} flex items-center justify-center text-xs font-bold`}>
@@ -458,7 +459,7 @@ const Analytics = () => {
                 ))
               ) : (
                 <div className={`text-center py-4 ${isDark ? 'text-gray-500' : 'text-gray-400'} italic`}>
-                  No escalation reasons recorded
+                  No misrouting reasons recorded
                 </div>
               )}
             </div>

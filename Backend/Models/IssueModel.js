@@ -23,8 +23,9 @@ const issueSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  isEscalated: { type: Boolean, default: false },
-  escalationReason: { type: String },
+  isReassignedToSuper: { type: Boolean, default: false },
+  reassignmentReason: { type: String },
+  reassignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // Track who misrouted it
   comments: [commentSchema],
   resolvedAt: { type: Date }
 });

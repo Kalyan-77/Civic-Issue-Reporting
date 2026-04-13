@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BASE_URL } from '../../../config';
 import { useTheme } from '../../Context/ThemeContext';
 import { io } from 'socket.io-client';
+import { useTranslation } from 'react-i18next';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function Navbar() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Check session on mount
   useEffect(() => {
@@ -257,18 +259,18 @@ export default function Navbar() {
 
     if (user?.role === 'dept_admin') {
       return [
-        { href: `${basePath}/`, label: 'Dashboard', icon: LayoutDashboard },
-        { href: `${basePath}/analysis`, label: 'Analytics', icon: BarChart2 },
-        { href: `${basePath}/help`, label: 'Help', icon: HelpCircle },
-        { href: `${basePath}/contact`, label: 'Contact', icon: Phone },
+        { href: `${basePath}/`, label: t('dashboard.nav.dashboard', 'Dashboard'), icon: LayoutDashboard },
+        { href: `${basePath}/analysis`, label: t('dashboard.nav.analytics', 'Analytics'), icon: BarChart2 },
+        { href: `${basePath}/help`, label: t('dashboard.nav.help', 'Help'), icon: HelpCircle },
+        { href: `${basePath}/contact`, label: t('dashboard.nav.contact', 'Contact'), icon: Phone },
       ];
     } else {
       // citizen or default
       return [
-        { href: `${basePath}/`, label: 'Dashboard', icon: LayoutDashboard },
-        { href: `${basePath}/report`, label: 'Report Issue', icon: FileText },
-        { href: `${basePath}/issues`, label: 'Community Issues', icon: Users },
-        { href: `${basePath}/contact`, label: 'Contact', icon: Phone }
+        { href: `${basePath}/`, label: t('dashboard.nav.dashboard', 'Dashboard'), icon: LayoutDashboard },
+        { href: `${basePath}/report`, label: t('dashboard.nav.report', 'Report Issue'), icon: FileText },
+        { href: `${basePath}/issues`, label: t('dashboard.nav.issues', 'Community Issues'), icon: Users },
+        { href: `${basePath}/contact`, label: t('dashboard.nav.contact', 'Contact'), icon: Phone }
       ];
     }
   };
@@ -488,7 +490,7 @@ export default function Navbar() {
                             }`}
                         >
                           <User className="w-4 h-4" />
-                          <span>My Profile</span>
+                          <span>{t('dashboard.nav.profile', 'My Profile')}</span>
                         </button>
                         <button
                           onClick={navigateToDashboard}
@@ -496,7 +498,7 @@ export default function Navbar() {
                             }`}
                         >
                           <LayoutDashboard className="w-4 h-4" />
-                          <span>Dashboard</span>
+                          <span>{t('dashboard.nav.dashboard', 'Dashboard')}</span>
                         </button>
                         <button
                           onClick={() => navigate(`${getBasePath()}/settings`)}
@@ -504,7 +506,7 @@ export default function Navbar() {
                             }`}
                         >
                           <Settings className="w-4 h-4" />
-                          <span>Settings</span>
+                          <span>{t('dashboard.nav.settings', 'Settings')}</span>
                         </button>
                       </div>
 
@@ -515,7 +517,7 @@ export default function Navbar() {
                             }`}
                         >
                           <LogOut className="w-4 h-4" />
-                          <span>Logout</span>
+                          <span>{t('dashboard.nav.logout', 'Logout')}</span>
                         </button>
                       </div>
                     </div>

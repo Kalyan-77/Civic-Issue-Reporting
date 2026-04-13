@@ -31,7 +31,7 @@ export default function AdminHome() {
     inProgress: 0,
     resolved: 0,
     critical: 0,
-    escalated: 0
+    misrouted: 0
   });
 
   const [todayStats, setTodayStats] = useState({
@@ -39,7 +39,7 @@ export default function AdminHome() {
     pending: 0,
     inProgress: 0,
     resolved: 0,
-    escalated: 0
+    misrouted: 0
   });
   const [recentIssues, setRecentIssues] = useState([]);
   const [performance, setPerformance] = useState({
@@ -134,19 +134,23 @@ export default function AdminHome() {
     const inProgress = relevantIssues.filter(i => i.status === 'In Progress').length;
     const resolved = relevantIssues.filter(i => i.status === 'Resolved').length;
     const critical = relevantIssues.filter(i => i.priority === 'high').length;
-    const escalated = relevantIssues.filter(i => i.isEscalated).length;
+    const misrouted = relevantIssues.filter(i => i.isReassignedToSuper).length;
 
     const totalToday = relevantIssues.filter(i => isToday(i.createdAt)).length;
     const pendingToday = relevantIssues.filter(i => i.status === 'Pending' && isToday(i.createdAt)).length;
     const inProgressToday = relevantIssues.filter(i => i.status === 'In Progress' && isToday(i.updatedAt)).length;
     const resolvedToday = relevantIssues.filter(i => i.status === 'Resolved' && isToday(i.updatedAt)).length;
-    const escalatedToday = relevantIssues.filter(i => i.isEscalated && isToday(i.updatedAt)).length;
+    const misroutedToday = relevantIssues.filter(i => i.isReassignedToSuper && isToday(i.updatedAt)).length;
 
-    setStats({ total, pending, inProgress, resolved, critical, escalated });
-    setTodayStats({ total: totalToday, pending: pendingToday, inProgress: inProgressToday, resolved: resolvedToday, escalated: escalatedToday });
+    setStats({ total, pending, inProgress, resolved, critical, misrouted });
+    setTodayStats({ total: totalToday, pending: pendingToday, inProgress: inProgressToday, resolved: resolvedToday, misrouted: misroutedToday });
     setAllIssues(relevantIssues);
 
-    setRecentIssues(relevantIssues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5));
+    setRecentIssues(relevantIssues
+      .filter(i => !i.isReassignedToSuper)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5)
+    );
 
     const resolvedWithTime = relevantIssues.filter(i => i.status === 'Resolved' && i.resolvedAt);
     let avgResolutionTime = '0h';
@@ -224,7 +228,7 @@ export default function AdminHome() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <StatCard
             title="Total Reports"
             value={stats.total}
@@ -255,6 +259,14 @@ export default function AdminHome() {
             icon={CheckCircle2}
             trend={`+${todayStats.resolved} Today`}
             color="green"
+            isDark={isDark}
+          />
+          <StatCard
+            title="Misrouted"
+            value={stats.misrouted}
+            icon={TrendingUp}
+            trend={`+${todayStats.misrouted} Today`}
+            color="amber"
             isDark={isDark}
           />
         </div>
@@ -423,8 +435,8 @@ export default function AdminHome() {
                     <p className={`text-sm font-medium ${isDark ? 'text-red-300' : 'text-red-600'} mb-1`}>High Priority</p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.escalated}</span>
-                    <p className={`text-sm font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'} mb-1`}>Escalated</p>
+                    <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.misrouted}</span>
+                    <p className={`text-sm font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'} mb-1`}>Misrouted</p>
                   </div>
                 </div>
                 <button
@@ -478,7 +490,7 @@ export default function AdminHome() {
             <div className={`p-6 border-b shrink-0 ${isDark ? 'border-gray-700' : 'border-slate-100'} flex justify-between items-center`}>
               <div>
                 <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Critical Attention Required</h2>
-                <p className={`mt-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Reviewing High Priority and Escalated issues</p>
+                <p className={`mt-1 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Reviewing High Priority and Misrouted issues</p>
               </div>
               <button
                 onClick={() => setShowCriticalModal(false)}
@@ -502,14 +514,14 @@ export default function AdminHome() {
                 )}
               </button>
               <button
-                onClick={() => setActiveModalTab('escalated')}
-                className={`pb-3 text-sm font-semibold transition-colors relative ${activeModalTab === 'escalated'
+                onClick={() => setActiveModalTab('misrouted')}
+                className={`pb-3 text-sm font-semibold transition-colors relative ${activeModalTab === 'misrouted'
                   ? (isDark ? 'text-orange-400' : 'text-orange-600')
                   : (isDark ? 'text-gray-400 hover:text-white' : 'text-slate-500 hover:text-slate-800')
                   }`}
               >
-                Escalated Issues ({stats.escalated})
-                {activeModalTab === 'escalated' && (
+                Misrouted Issues ({stats.misrouted})
+                {activeModalTab === 'misrouted' && (
                   <div className={`absolute bottom-0 left-0 w-full h-0.5 ${isDark ? 'bg-orange-500' : 'bg-orange-600'}`}></div>
                 )}
               </button>
@@ -546,22 +558,22 @@ export default function AdminHome() {
                   </div>
                 </div>
               )}
-              {activeModalTab === 'escalated' && (
+              {activeModalTab === 'misrouted' && (
                 <div className="h-full flex flex-col">
                   <div className={`p-4 border-b ${isDark ? 'bg-orange-900/20 border-gray-700' : 'bg-orange-50 border-orange-100'} flex items-center gap-3`}>
                     <div className={`p-2 rounded-full ${isDark ? 'bg-orange-900/30' : 'bg-white'}`}>
                       <TrendingUp className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
                     </div>
                     <div>
-                      <h3 className={`text-sm font-bold ${isDark ? 'text-orange-400' : 'text-orange-800'}`}>Escalated Issues</h3>
-                      <p className={`text-xs ${isDark ? 'text-orange-300/70' : 'text-orange-600/80'}`}>Issues flagged for higher level review</p>
+                      <h3 className={`text-sm font-bold ${isDark ? 'text-orange-400' : 'text-orange-800'}`}>Misrouted Issues</h3>
+                      <p className={`text-xs ${isDark ? 'text-orange-300/70' : 'text-orange-600/80'}`}>Issues flagged for redirection</p>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                    {allIssues.filter(i => i.isEscalated).length > 0 ? (
+                    {allIssues.filter(i => i.isReassignedToSuper).length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {allIssues.filter(i => i.isEscalated).map(issue => (
-                          <IssueCardCompact key={issue._id} issue={issue} isDark={isDark} type="escalated" />
+                        {allIssues.filter(i => i.isReassignedToSuper).map(issue => (
+                          <IssueCardCompact key={issue._id} issue={issue} isDark={isDark} type="misrouted" />
                         ))}
                       </div>
                     ) : (
@@ -570,7 +582,7 @@ export default function AdminHome() {
                           <CheckCircle2 className={`w-12 h-12 ${isDark ? 'text-green-500' : 'text-green-600'}`} />
                         </div>
                         <h3 className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>All Clear!</h3>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>No escalated issues found.</p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>No misrouted issues found.</p>
                       </div>
                     )}
                   </div>
@@ -615,10 +627,10 @@ function IssueCardCompact({ issue, isDark, type }) {
         {issue.description}
       </p>
 
-      {type === 'escalated' && issue.escalationReason && (
+      {type === 'misrouted' && issue.reassignmentReason && (
         <div className={`text-xs p-2 rounded mb-3 ${isDark ? 'bg-orange-900/20 text-orange-300' : 'bg-orange-50 text-orange-700'
           }`}>
-          <span className="font-bold">Reason:</span> {issue.escalationReason}
+          <span className="font-bold">Reason:</span> {issue.reassignmentReason}
         </div>
       )}
 
@@ -648,6 +660,10 @@ function StatCard({ title, value, icon: Icon, trend, color, isDark }) {
     green: {
       light: 'bg-green-50 text-green-600',
       dark: 'bg-green-900/20 text-green-400',
+    },
+    amber: {
+      light: 'bg-amber-50 text-amber-600',
+      dark: 'bg-amber-900/20 text-amber-400',
     }
   };
 

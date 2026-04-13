@@ -15,9 +15,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../Context/ThemeContext";
 import { BASE_URL } from "../../../config";
+import { useTranslation } from "react-i18next";
 import LeafletMap from "../../Components/LeafletMap";
 
 export default function ReportIssue() {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -41,11 +43,11 @@ export default function ReportIssue() {
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   const categories = [
-    { value: "Garbage", label: "Garbage", icon: "🗑️" },
-    { value: "Streetlight", label: "Lights", icon: "💡" },
-    { value: "Pothole", label: "Pothole", icon: "🕳️" },
-    { value: "Water Leakage", label: "Water", icon: "💧" },
-    { value: "Other", label: "Other", icon: "📋" }
+    { value: "Garbage", label: t('report_issue.categories.garbage', 'Garbage'), icon: "🗑️" },
+    { value: "Streetlight", label: t('report_issue.categories.lights', 'Lights'), icon: "💡" },
+    { value: "Pothole", label: t('report_issue.categories.pothole', 'Pothole'), icon: "🕳️" },
+    { value: "Water Leakage", label: t('report_issue.categories.water', 'Water'), icon: "💧" },
+    { value: "Other", label: t('report_issue.categories.other', 'Other'), icon: "📋" }
   ];
 
   const priorities = [
@@ -99,7 +101,7 @@ export default function ReportIssue() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        showNotification("Image size should be less than 5MB", "error");
+        showNotification(t('report_issue.error_image_size', 'Image size should be less than 5MB'), "error");
         return;
       }
       setImage(file);
@@ -115,7 +117,7 @@ export default function ReportIssue() {
   const getCurrentLocation = () => {
     setGettingLocation(true);
     if (!navigator.geolocation) {
-      showNotification("Geolocation is not supported by your browser", "error");
+      showNotification(t('report_issue.error_gps_unsupported', 'Geolocation is not supported by your browser'), "error");
       setGettingLocation(false);
       return;
     }
@@ -153,7 +155,7 @@ export default function ReportIssue() {
           }
         } catch (error) {
           console.error("Failed to fetch address details:", error);
-          showNotification("Location captured, but failed to fetch address details", "warning");
+          showNotification(t('report_issue.warning_address_failed', 'Location captured, but failed to fetch address details'), "warning");
         }
 
         setFormData(prev => ({
@@ -164,11 +166,11 @@ export default function ReportIssue() {
           area: fetchedArea
         }));
         setGettingLocation(false);
-        showNotification("Location and address captured successfully!", "success");
+        showNotification(t('report_issue.success_location', 'Location and address captured successfully!'), "success");
       },
       (error) => {
         console.error("Error getting location:", error);
-        showNotification("Unable to retrieve your location. Please enable location services.", "error");
+        showNotification(t('report_issue.error_gps_failed', 'Unable to retrieve your location. Please enable location services.'), "error");
         setGettingLocation(false);
       }
     );
@@ -189,14 +191,14 @@ export default function ReportIssue() {
     setLoading(true);
 
     if (!user) {
-      showNotification("Please login first to report an issue!", "error");
+      showNotification(t('report_issue.error_login_required', 'Please login first to report an issue!'), "error");
       setLoading(false);
       return;
     }
 
     // Basic Validation
     if (!formData.title || !formData.description || !formData.category || !formData.area) {
-      showNotification("Please fill in all required fields", "error");
+      showNotification(t('report_issue.error_missing_fields', 'Please fill in all required fields'), "error");
       setLoading(false);
       return;
     }
@@ -217,9 +219,8 @@ export default function ReportIssue() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to report issue");
-
-      showNotification("Issue reported successfully! Redirecting...", "success");
+      if (!res.ok) throw new Error(data.message || t('report_issue.error_submit_failed', 'Failed to report issue'));
+      showNotification(t('report_issue.success_submit', 'Issue reported successfully! Redirecting...'), "success");
 
       setFormData({
         title: "",
@@ -288,10 +289,10 @@ export default function ReportIssue() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h1 className={`text-4xl font-extrabold mb-3 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                Report an Issue
+                {t('report_issue.title', 'Report an Issue')}
               </h1>
               <p className={`text-lg max-w-2xl leading-relaxed ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                Help us improve your community by reporting civic problems. Please provide accurate details for faster resolution.
+                {t('report_issue.subtitle', 'Help us improve your community by reporting civic problems. Please provide accurate details for faster resolution.')}
               </p>
             </div>
           </div>
@@ -309,26 +310,26 @@ export default function ReportIssue() {
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Issue Details</h3>
-                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Describe the problem you are facing</p>
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('report_issue.details_title', 'Issue Details')}</h3>
+                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{t('report_issue.details_desc', 'Describe the problem you are facing')}</p>
                 </div>
               </div>
 
               <div className="space-y-8">
                 <div>
-                  <label className={labelStyles}>Issue Title <span className="text-red-500">*</span></label>
+                  <label className={labelStyles}>{t('report_issue.field_title', 'Issue Title')} <span className="text-red-500">{t('report_issue.mandatory', '*')}</span></label>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="e.g. Broken Streetlight outside Central Park"
+                    placeholder={t('report_issue.placeholder_title', 'e.g. Broken Streetlight outside Central Park')}
                     className={inputStyles}
                   />
                 </div>
 
                 <div>
-                  <label className={labelStyles}>Category <span className="text-red-500">*</span></label>
+                  <label className={labelStyles}>{t('report_issue.field_category', 'Category')} <span className="text-red-500">{t('report_issue.mandatory', '*')}</span></label>
                   <div className="relative">
                     <select
                       name="category"
@@ -336,7 +337,7 @@ export default function ReportIssue() {
                       onChange={handleInputChange}
                       className={`${inputStyles} appearance-none cursor-pointer`}
                     >
-                      <option value="">Select Category</option>
+                      <option value="">{t('report_issue.select_category', 'Select Category')}</option>
                       {categories.map((cat) => (
                         <option key={cat.value} value={cat.value}>
                           {cat.label}
@@ -348,7 +349,7 @@ export default function ReportIssue() {
                 </div>
 
                 <div>
-                  <label className={labelStyles}>Priority Level</label>
+                  <label className={labelStyles}>{t('report_issue.field_priority', 'Priority Level')}</label>
                   <div className="flex flex-wrap gap-3">
                     {priorities.map((p) => (
                       <button
@@ -369,13 +370,13 @@ export default function ReportIssue() {
                 </div>
 
                 <div>
-                  <label className={labelStyles}>Description <span className="text-red-500">*</span></label>
+                  <label className={labelStyles}>{t('report_issue.field_description', 'Description')} <span className="text-red-500">{t('report_issue.mandatory', '*')}</span></label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows="5"
-                    placeholder="Please describe the issue in detail. Mention any specific landmarks or hazards..."
+                    placeholder={t('report_issue.placeholder_description', 'Please describe the issue in detail. Mention any specific landmarks or hazards...')}
                     className={`${inputStyles} resize-none leading-relaxed`}
                   />
                 </div>
@@ -390,8 +391,8 @@ export default function ReportIssue() {
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Location</h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>Pinpoint the exact spot</p>
+                    <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('report_issue.location_title', 'Location')}</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-slate-500'}`}>{t('report_issue.location_desc', 'Pinpoint the exact spot')}</p>
                   </div>
                 </div>
                 <button
@@ -404,7 +405,7 @@ export default function ReportIssue() {
                     }`}
                 >
                   {gettingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-                  {gettingLocation ? 'Locating...' : 'Use My GPS'}
+                  {gettingLocation ? t('report_issue.locating', 'Locating...') : t('report_issue.use_gps', 'Use My GPS Location')}
                 </button>
               </div>
 
@@ -429,7 +430,7 @@ export default function ReportIssue() {
                     className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-lg"
                   >
                     <Navigation className="w-4 h-4" />
-                    Use My GPS Location
+                    {t('report_issue.use_gps', 'Use My GPS Location')}
                   </button>
                 </div>
 
@@ -448,25 +449,25 @@ export default function ReportIssue() {
                 )}
 
                 <div>
-                  <label className={labelStyles}>Area / Locality <span className="text-red-500">*</span></label>
+                  <label className={labelStyles}>{t('report_issue.field_area', 'Area / Locality')} <span className="text-red-500">{t('report_issue.mandatory', '*')}</span></label>
                   <input
                     type="text"
                     name="area"
                     value={formData.area}
                     onChange={handleInputChange}
-                    placeholder="Auto-filled from map or enter manually"
+                    placeholder={t('report_issue.placeholder_area', 'Auto-filled from map or enter manually')}
                     className={inputStyles}
                   />
                 </div>
 
                 <div>
-                  <label className={labelStyles}>Full Address</label>
+                  <label className={labelStyles}>{t('report_issue.field_address', 'Full Address')}</label>
                   <textarea
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
                     rows="2"
-                    placeholder="Street address or nearby landmarks"
+                    placeholder={t('report_issue.placeholder_address', 'Street address or nearby landmarks')}
                     className={`${inputStyles} resize-none`}
                   />
                 </div>
@@ -485,7 +486,7 @@ export default function ReportIssue() {
                   <Camera className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Evidence</h3>
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('report_issue.evidence_title', 'Evidence')}</h3>
                 </div>
               </div>
 
@@ -498,8 +499,8 @@ export default function ReportIssue() {
                     <div className={`p-5 rounded-full mb-4 transition-transform group-hover:scale-110 ${isDark ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
                       <Upload className="w-8 h-8" />
                     </div>
-                    <span className={`font-bold text-lg ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Upload Photo</span>
-                    <span className={`text-xs mt-2 font-medium ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>JPG, PNG up to 5MB</span>
+                    <span className={`font-bold text-lg ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>{t('report_issue.upload_photo', 'Upload Photo')}</span>
+                    <span className={`text-xs mt-2 font-medium ${isDark ? 'text-gray-500' : 'text-slate-400'}`}>{t('report_issue.upload_formats', 'JPG, PNG up to 5MB')}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -523,7 +524,7 @@ export default function ReportIssue() {
                       <X className="w-5 h-5" />
                     </button>
                     <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white font-bold text-sm drop-shadow-md">Image Preview</p>
+                      <p className="text-white font-bold text-sm drop-shadow-md">{t('common.preview', 'Image Preview')}</p>
                     </div>
                   </div>
                 )}
@@ -533,10 +534,10 @@ export default function ReportIssue() {
             {/* Submit Actions */}
             <div className={`sticky top-8 p-6 rounded-3xl shadow-sm border ${isDark ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-slate-100 shadow-slate-200/50'}`}>
               <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                Ready to Submit?
+                {t('report_issue.submit_ready', 'Ready to Submit?')}
               </h3>
               <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                Ensure location and details are accurate.
+                {t('report_issue.submit_desc', 'Ensure location and details are accurate.')}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -548,7 +549,7 @@ export default function ReportIssue() {
                 >
                   <div className="relative z-10 flex items-center justify-center gap-2">
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                    <span>Submit Report</span>
+                    <span>{t('report_issue.submit_btn', 'Submit Report')}</span>
                     {!loading && <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
                   </div>
                 </button>
@@ -561,7 +562,7 @@ export default function ReportIssue() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                 >
-                  Cancel
+                  {t('report_issue.cancel_btn', 'Cancel')}
                 </button>
               </div>
             </div>

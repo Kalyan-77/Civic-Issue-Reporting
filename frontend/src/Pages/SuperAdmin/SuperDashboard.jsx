@@ -10,7 +10,8 @@ import {
   Shield,
   ChevronRight,
   History,
-  Activity
+  Activity,
+  CornerUpRight
 } from 'lucide-react';
 import { BASE_URL } from '../../../config';
 import { useTheme } from '../../Context/ThemeContext';
@@ -22,7 +23,8 @@ export default function SuperAdminDashboard() {
     pendingIssues: 0,
     inProgressIssues: 0,
     resolvedIssues: 0,
-    criticalIssues: 0
+    criticalIssues: 0,
+    misroutedIssues: 0
   });
 
   const [recentIssues, setRecentIssues] = useState([]);
@@ -107,6 +109,7 @@ export default function SuperAdminDashboard() {
     const inProgress = issues.filter(i => i.status === 'In Progress').length;
     const resolved = issues.filter(i => i.status === 'Resolved').length;
     const critical = issues.filter(i => i.priority === 'high').length;
+    const misrouted = issues.filter(i => i.isReassignedToSuper === true).length;
 
     // Category counts
     const roadIssues = issues.filter(i => i.category === 'Road Issues').length;
@@ -119,7 +122,8 @@ export default function SuperAdminDashboard() {
       pendingIssues: pending,
       inProgressIssues: inProgress,
       resolvedIssues: resolved,
-      criticalIssues: critical
+      criticalIssues: critical,
+      misroutedIssues: misrouted
     });
 
     setCategoryStats({
@@ -272,9 +276,16 @@ export default function SuperAdminDashboard() {
                         {issue.title || issue.category}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 text-xs font-medium rounded ${getStatusColor(issue.status)}`}>
-                          {issue.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex px-3 py-1 text-xs font-medium rounded ${getStatusColor(issue.status)}`}>
+                            {issue.status}
+                          </span>
+                          {issue.isReassignedToSuper && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded ${isDark ? 'bg-pink-900/20 text-pink-400' : 'bg-pink-50 text-pink-600'}`}>
+                              Misrouted
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         {formatDate(issue.createdAt)}
@@ -319,16 +330,17 @@ export default function SuperAdminDashboard() {
                   </div>
                 </a>
 
-                {/* Escalated Issues */}
+                {/* Misrouted Issues */}
                 <a
-                  href="/superadmin/escalated"
+                  href="/superadmin/issues?misrouted=true"
                   className={`block p-6 ${isDark ? 'bg-gray-800 border-gray-600 hover:bg-gray-700' : 'bg-white border-gray-200'} border-2 rounded-lg hover:shadow-lg transition-all cursor-pointer group text-center`}
                 >
                   <div className="flex flex-col items-center space-y-3">
-                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Shield className="w-10 h-10 text-white" />
+                    <div className="w-20 h-20 bg-pink-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <CornerUpRight className="w-10 h-10 text-white" />
                     </div>
-                    <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-800'} text-sm`}>Escalated Issues</h3>
+                    <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-800'} text-sm`}>Misrouted Issues</h3>
+                    <div className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded text-xs font-bold">{stats.misroutedIssues} New</div>
                   </div>
                 </a>
               </div>

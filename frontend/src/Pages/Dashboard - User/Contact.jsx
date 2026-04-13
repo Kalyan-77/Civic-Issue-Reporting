@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Send, Mail, Phone, MapPin, Clock, CheckCircle, AlertCircle, Loader2, User, Building2, ChevronRight, HelpCircle, ChevronDown } from "lucide-react";
 import { BASE_URL } from "../../../config";
 import { useTheme } from "../../Context/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export default function Contact() {
   // const { isDark } = useTheme(); // Removed unused variable, CSS handles theming
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
@@ -128,11 +130,10 @@ export default function Contact() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
-            How can we <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">help you?</span>
+            {t('contact.help_title', 'How can we')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">{t('contact.help_highlight', 'help you?')}</span>
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Our team is here to assist you with any questions or concerns.
-            Fill out the form below or reach out to our administrators directly.
+            {t('contact.help_subtitle', 'Our team is here to assist you with any questions or concerns. Fill out the form below or reach out to our administrators directly.')}
           </p>
         </div>
 
@@ -146,7 +147,7 @@ export default function Contact() {
                 <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
                   <Send className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Send us a Message</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('contact.send_message', 'Send us a Message')}</h2>
               </div>
 
               {success && (
@@ -155,8 +156,8 @@ export default function Contact() {
                     <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">Message Sent!</h4>
-                    <p className="text-emerald-700 dark:text-emerald-300 text-sm mt-1">We've received your inquiry and will get back to you shortly.</p>
+                    <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">{t('contact.success_title', 'Message Sent!')}</h4>
+                    <p className="text-emerald-700 dark:text-emerald-300 text-sm mt-1">{t('contact.success_msg', "We've received your inquiry and will get back to you shortly.")}</p>
                   </div>
                 </div>
               )}
@@ -173,43 +174,43 @@ export default function Contact() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('contact.full_name', 'Full Name')}</label>
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white"
-                      placeholder="John Doe"
+                      placeholder={t('contact.placeholder_name', 'John Doe')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('contact.email_address', 'Email Address')}</label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white"
-                      placeholder="john@example.com"
+                      placeholder={t('contact.placeholder_email', 'john@example.com')}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Subject</label>
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('contact.subject', 'Subject')}</label>
                     <input
                       type="text"
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white"
-                      placeholder="Brief summary of your inquiry"
+                      placeholder={t('contact.placeholder_subject', 'Brief summary of your inquiry')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">To Whom To Contact</label>
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('contact.recipient', 'To Whom To Contact')}</label>
                     <div className="relative">
                       <select
                         name="recipient"
@@ -217,13 +218,13 @@ export default function Contact() {
                         onChange={handleChange}
                         className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none appearance-none cursor-pointer text-slate-900 dark:text-white"
                       >
-                        <option value="" disabled>Select Recipient</option>
-                        <optgroup label="Super Admins">
+                        <option value="" disabled>{t('contact.select_recipient', 'Select Recipient')}</option>
+                        <optgroup label={t('contact.super_admins', 'Super Admins')}>
                           {superAdmins.map(admin => (
-                            <option key={admin._id} value={admin._id}>{admin.name} (Super Admin)</option>
+                            <option key={admin._id} value={admin._id}>{admin.name} ({t('settings.tabs.general.role_super_admin', 'Super Admin')})</option>
                           ))}
                         </optgroup>
-                        <optgroup label="Department Admins">
+                        <optgroup label={t('contact.dept_admins', 'Department Admins')}>
                           {deptAdmins.map(admin => (
                             <option key={admin._id} value={admin._id}>{admin.name} ({admin.department})</option>
                           ))}
@@ -235,14 +236,14 @@ export default function Contact() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Message</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('contact.message', 'Message')}</label>
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     rows="5"
                     className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white"
-                    placeholder="Please minimize detailed personal information..."
+                    placeholder={t('contact.placeholder_message', 'Please minimize detailed personal information...')}
                   ></textarea>
                 </div>
 
@@ -254,11 +255,11 @@ export default function Contact() {
                   {loading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Sending...</span>
+                      <span>{t('contact.sending_btn', 'Sending...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Send Message</span>
+                      <span>{t('contact.send_btn', 'Send Message')}</span>
                       <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
@@ -276,7 +277,7 @@ export default function Contact() {
                 <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
                   <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h3 className="font-bold text-lg text-slate-800 dark:text-white">Administration</h3>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white">{t('contact.administration', 'Administration')}</h3>
               </div>
 
               {superAdmins.length > 0 ? (
@@ -304,7 +305,7 @@ export default function Contact() {
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="font-bold text-lg text-slate-800 dark:text-white">Department Heads</h3>
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white">{t('contact.dept_heads', 'Department Heads')}</h3>
               </div>
 
               {deptAdmins.length > 0 ? (
@@ -315,7 +316,7 @@ export default function Contact() {
                       className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none appearance-none cursor-pointer text-slate-900 dark:text-white font-medium"
                       defaultValue=""
                     >
-                      <option value="" disabled>Select Department</option>
+                      <option value="" disabled>{t('contact.select_dept', 'Select Department')}</option>
                       {deptAdmins.map((admin) => (
                         <option key={admin._id} value={admin._id}>
                           {admin.department} - {admin.name}
@@ -371,9 +372,9 @@ export default function Contact() {
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg mb-1">Office Hours</h4>
-                    <p className="text-indigo-100 text-sm">Mon - Fri: 9:00 AM - 6:00 PM</p>
-                    <p className="text-indigo-100 text-sm">Sat: 10:00 AM - 2:00 PM</p>
+                    <h4 className="font-bold text-lg mb-1">{t('contact.office_hours', 'Office Hours')}</h4>
+                    <p className="text-indigo-100 text-sm">{t('contact.office_hours_days', 'Mon - Fri: 9:00 AM - 6:00 PM')}</p>
+                    <p className="text-indigo-100 text-sm">{t('contact.office_hours_sat', 'Sat: 10:00 AM - 2:00 PM')}</p>
                   </div>
                 </div>
               </div>
@@ -381,16 +382,16 @@ export default function Contact() {
               <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-800 shadow-lg transition-colors duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <HelpCircle className="w-5 h-5 text-orange-500" />
-                  <h4 className="font-bold text-slate-800 dark:text-white">Support Tips</h4>
+                  <h4 className="font-bold text-slate-800 dark:text-white">{t('contact.support_tips', 'Support Tips')}</h4>
                 </div>
                 <ul className="space-y-3">
                   <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-2 flex-shrink-0"></span>
-                    <span>Please provide specific details in your message.</span>
+                    <span>{t('contact.tip1', 'Please provide specific details in your message.')}</span>
                   </li>
                   <li className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-2 flex-shrink-0"></span>
-                    <span>Allow 24-48 hours for a response.</span>
+                    <span>{t('contact.tip2', 'Allow 24-48 hours for a response.')}</span>
                   </li>
                 </ul>
               </div>

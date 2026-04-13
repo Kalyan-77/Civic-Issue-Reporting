@@ -21,8 +21,10 @@ import {
     Search,
     X
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
+    const { t, i18n } = useTranslation();
     const { theme, toggleTheme, isDark } = useTheme();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'general');
@@ -32,7 +34,7 @@ export default function Settings() {
         emailNotifications: true,
         pushNotifications: false,
         weeklyReports: true,
-        language: 'en',
+        language: i18n.language || 'en',
         activityLogRetention: 'manual',
         autoArchive: '30'
     });
@@ -86,7 +88,7 @@ export default function Settings() {
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
-            if (!isPolling) showToast('Failed to load notifications', 'error');
+            if (!isPolling) showToast(t('settings.notifications.error_load', 'Failed to load notifications'), 'error');
         } finally {
             if (!isPolling) setNotificationsLoading(false);
         }
@@ -101,11 +103,11 @@ export default function Settings() {
             const data = await res.json();
             if (data.success) {
                 setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-                showToast('All notifications marked as read', 'success');
+                showToast(t('settings.notifications.all_read_success', 'All notifications marked as read'), 'success');
             }
         } catch (error) {
             console.error('Error marking all as read:', error);
-            showToast('Failed to mark all as read', 'error');
+            showToast(t('settings.notifications.all_read_error', 'Failed to mark all as read'), 'error');
         }
     };
 
@@ -118,13 +120,13 @@ export default function Settings() {
             const data = await res.json();
             if (data.success) {
                 setNotifications(prev => prev.filter(n => n._id !== id));
-                showToast('Notification deleted', 'success');
+                showToast(t('settings.notifications.deleted_success', 'Notification deleted'), 'success');
             } else {
                 showToast(data.message || 'Failed to delete notification', 'error');
             }
         } catch (error) {
             console.error('Error deleting notification:', error);
-            showToast('Error deleting notification', 'error');
+            showToast(t('settings.notifications.delete_error', 'Error deleting notification'), 'error');
         }
     };
 
@@ -155,9 +157,9 @@ export default function Settings() {
             let label = date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 
             if (dateString === today) {
-                label = 'Today';
+                label = t('settings.notifications.today', 'Today');
             } else if (dateString === yesterday) {
-                label = 'Yesterday';
+                label = t('settings.notifications.yesterday', 'Yesterday');
             }
 
             if (label !== currentLabel) {
@@ -195,23 +197,23 @@ export default function Settings() {
 
             const data = await res.json();
             if (data.success) {
-                showToast('Settings saved successfully!', 'success');
+                showToast(t('settings.activity.success_save', 'Settings saved successfully!'), 'success');
                 setUserData(data.user);
             } else {
                 showToast(data.message || 'Failed to save settings', 'error');
             }
         } catch (error) {
             console.error('Error saving settings:', error);
-            showToast('Error saving settings', 'error');
+            showToast(t('settings.activity.error_save', 'Error saving settings'), 'error');
         }
     };
 
     const tabs = [
-        { id: 'general', label: 'General', icon: User },
-        { id: 'appearance', label: 'Appearance', icon: Sun },
-        { id: 'notifications', label: 'Notifications', icon: Bell },
-        { id: 'security', label: 'Security', icon: Shield },
-        { id: 'activity', label: 'Activity Logs', icon: Activity }
+        { id: 'general', label: t('settings.tabs.general', 'General'), icon: User },
+        { id: 'appearance', label: t('settings.tabs.appearance', 'Appearance'), icon: Sun },
+        { id: 'notifications', label: t('settings.tabs.notifications', 'Notifications'), icon: Bell },
+        { id: 'security', label: t('settings.tabs.security', 'Security'), icon: Shield },
+        { id: 'activity', label: t('settings.tabs.activity', 'Activity Logs'), icon: Activity }
     ];
 
     const [activities, setActivities] = useState([]);
@@ -247,8 +249,7 @@ export default function Settings() {
     };
 
     const handleDeleteActivities = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${selectedActivities.length} logs?`)) return;
-
+        if (!window.confirm(t('settings.activity.confirm_delete', 'Are you sure you want to delete {{count}} activities?', { count: selectedActivities.length }))) return;
         setIsDeleting(true);
         try {
             const res = await fetch(`${BASE_URL}/activity/delete`, {
@@ -263,7 +264,7 @@ export default function Settings() {
             const data = await res.json();
 
             if (res.ok) {
-                showToast(data.message, 'success');
+                showToast(t('settings.activity.success_delete', 'Activities deleted successfully!'), 'success');
                 fetchActivities();
                 setSelectedActivities([]);
             } else {
@@ -271,7 +272,7 @@ export default function Settings() {
             }
         } catch (err) {
             console.error(err);
-            showToast('Failed to delete activities', 'error');
+            showToast(t('settings.activity.error_delete', 'Failed to delete activities'), 'error');
         } finally {
             setIsDeleting(false);
         }
@@ -316,8 +317,8 @@ export default function Settings() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-6 mb-6 transition-colors duration-200`}>
-                    <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Settings</h1>
-                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Manage your preferences and account settings</p>
+                    <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.title', 'Settings')}</h1>
+                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>{t('settings.subtitle', 'Manage your preferences and account settings')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -353,8 +354,8 @@ export default function Settings() {
                         {activeTab === 'general' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>General Settings</h2>
-                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>Manage your basic preferences</p>
+                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{t('settings.general.title', 'General Settings')}</h2>
+                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>{t('settings.general.subtitle', 'Manage your basic preferences')}</p>
                                 </div>
 
                                 <div className="space-y-6">
@@ -362,22 +363,23 @@ export default function Settings() {
                                     <div>
                                         <label className={`block text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                                             <Globe className="w-4 h-4 inline mr-2" />
-                                            Language
+                                            {t('settings.language_label', 'Language')}
                                         </label>
                                         <select
                                             value={settings.language}
-                                            onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                                            onChange={(e) => {
+                                                const newLang = e.target.value;
+                                                setSettings({ ...settings, language: newLang });
+                                                i18n.changeLanguage(newLang);
+                                            }}
                                             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${isDark
                                                 ? 'bg-gray-700 border-gray-600 text-white'
                                                 : 'bg-white border-gray-300 text-gray-900'
                                                 }`}
                                         >
                                             <option value="en">English</option>
-                                            <option value="es">Spanish</option>
-                                            <option value="fr">French</option>
-                                            <option value="de">German</option>
                                             <option value="hi">Hindi</option>
-                                            <option value="mr">Marathi</option>
+                                            <option value="te">Telugu</option>
                                         </select>
                                     </div>
                                 </div>
@@ -388,8 +390,8 @@ export default function Settings() {
                         {activeTab === 'appearance' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Appearance</h2>
-                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>Customize the look and feel of your dashboard</p>
+                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{t('settings.appearance.title', 'Appearance')}</h2>
+                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>{t('settings.appearance.subtitle', 'Customize the look and feel of your dashboard')}</p>
                                 </div>
 
                                 {/* Theme Toggle */}
@@ -405,10 +407,10 @@ export default function Settings() {
                                             </div>
                                             <div>
                                                 <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                                    {isDark ? 'Dark Mode' : 'Light Mode'}
+                                                    {isDark ? t('settings.appearance.dark_mode', 'Dark Mode') : t('settings.appearance.light_mode', 'Light Mode')}
                                                 </h3>
                                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    {isDark ? 'Using dark theme' : 'Using light theme'}
+                                                    {isDark ? t('settings.appearance.using_dark', 'Using dark theme') : t('settings.appearance.using_light', 'Using light theme')}
                                                 </p>
                                             </div>
                                         </div>
@@ -437,8 +439,8 @@ export default function Settings() {
                         {activeTab === 'notifications' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Notification Preferences</h2>
-                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>Choose how you want to be notified</p>
+                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{t('settings.notifications.title', 'Notification Preferences')}</h2>
+                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>{t('settings.notifications.subtitle', 'Choose how you want to be notified')}</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -447,8 +449,8 @@ export default function Settings() {
                                         <div className="flex items-center space-x-3">
                                             <Mail className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                                             <div>
-                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Email Notifications</h4>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Receive email updates for your reported issues</p>
+                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.notifications.email_title', 'Email Notifications')}</h4>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.notifications.email_desc', 'Receive email updates for your reported issues')}</p>
                                             </div>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
@@ -467,8 +469,8 @@ export default function Settings() {
                                         <div className="flex items-center space-x-3">
                                             <Smartphone className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                                             <div>
-                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Push Notifications</h4>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Get push notifications on your device</p>
+                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.notifications.push_title', 'Push Notifications')}</h4>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.notifications.push_desc', 'Get push notifications on your device')}</p>
                                             </div>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
@@ -487,8 +489,8 @@ export default function Settings() {
                                         <div className="flex items-center space-x-3">
                                             <Bell className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                                             <div>
-                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Weekly Summary</h4>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Receive weekly summary of nearby issues</p>
+                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.notifications.weekly_title', 'Weekly Summary')}</h4>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.notifications.weekly_desc', 'Receive weekly summary of nearby issues')}</p>
                                             </div>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
@@ -505,12 +507,12 @@ export default function Settings() {
 
                                 <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Notification History</h2>
+                                        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.notifications.history_title', 'Notification History')}</h2>
                                         <button
                                             onClick={markAllAsRead}
                                             className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
                                         >
-                                            Mark all as read
+                                            {t('settings.notifications.mark_all_read', 'Mark all as read')}
                                         </button>
                                     </div>
 
@@ -518,7 +520,7 @@ export default function Settings() {
                                         {notificationsLoading ? (
                                             <div className="p-12 text-center">
                                                 <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                                                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Loading notifications...</p>
+                                                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>{t('settings.notifications.loading', 'Loading notifications...')}</p>
                                             </div>
                                         ) : notifications.length > 0 ? (
                                             <div className="divide-y divide-gray-200 dark:divide-gray-600">
@@ -547,11 +549,11 @@ export default function Settings() {
                                                                         <div className="flex justify-between items-start">
                                                                             <div>
                                                                                 <h4 className={`text-base font-semibold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                                                    {notification.type === 'STATUS_UPDATE' ? 'Status Update' : 'New Message'}
+                                                                                    {notification.type === 'STATUS_UPDATE' ? t('settings.notifications.status_update', 'Status Update') : t('settings.notifications.new_message', 'New Message')}
                                                                                 </h4>
                                                                                 {notification.sender && (
                                                                                     <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
-                                                                                        From: {notification.sender.name || 'System'}
+                                                                                        {t('settings.notifications.from', { name: notification.sender?.name || t('settings.notifications.system', 'System') })}
                                                                                     </p>
                                                                                 )}
                                                                             </div>
@@ -570,7 +572,7 @@ export default function Settings() {
                                                                                     to={`/citizen/issue/${typeof notification.issueId === 'object' ? notification.issueId._id : notification.issueId}`}
                                                                                     className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline"
                                                                                 >
-                                                                                    View related issue
+                                                                                    {t('settings.notifications.view_related', 'View related issue')}
                                                                                     <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                                                     </svg>
@@ -594,7 +596,7 @@ export default function Settings() {
                                                                                 ? 'text-gray-500 hover:text-red-400 hover:bg-red-900/20'
                                                                                 : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
                                                                                 }`}
-                                                                            title="Delete notification"
+                                                                            title={t('settings.notifications.delete', 'Delete notification')}
                                                                         >
                                                                             <Trash2 className="w-4 h-4" />
                                                                         </button>
@@ -610,8 +612,8 @@ export default function Settings() {
                                                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
                                                     <Bell className={`w-8 h-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                                                 </div>
-                                                <h3 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>No notifications</h3>
-                                                <p className={`mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>You're all caught up! Check back later.</p>
+                                                <h3 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.notifications.no_notifications', 'No notifications')}</h3>
+                                                <p className={`mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t('settings.notifications.all_caught_up', "You're all caught up! Check back later.")}</p>
                                             </div>
                                         )}
                                     </div>
@@ -623,8 +625,8 @@ export default function Settings() {
                         {activeTab === 'security' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Security Settings</h2>
-                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>Manage your account security</p>
+                                    <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>{t('settings.security.title', 'Security Settings')}</h2>
+                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6`}>{t('settings.security.subtitle', 'Manage your account security')}</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -632,14 +634,14 @@ export default function Settings() {
                                         <div className="flex items-center space-x-3">
                                             <Lock className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
                                             <div className="flex-1">
-                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Password</h4>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Reset your password</p>
+                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.security.password_title', 'Password')}</h4>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.security.password_desc', 'Reset your password')}</p>
                                             </div>
                                             <button
                                                 onClick={() => window.location.href = '/citizen/profile'}
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                             >
-                                                Change Password
+                                                {t('settings.security.change_pw', 'Change Password')}
                                             </button>
                                         </div>
                                     </div>
@@ -653,8 +655,8 @@ export default function Settings() {
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
                                         <div>
-                                            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>My Activity Logs</h2>
-                                            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Monitor your recent activities</p>
+                                            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.activity.title', 'My Activity Logs')}</h2>
+                                            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.activity.subtitle', 'Monitor your recent activities')}</p>
                                         </div>
                                         <div className="flex gap-2">
                                             {selectedActivities.length > 0 && (
@@ -664,13 +666,13 @@ export default function Settings() {
                                                     className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
-                                                    Delete ({selectedActivities.length})
+                                                    {t('settings.activity.delete_btn', { count: selectedActivities.length })}
                                                 </button>
                                             )}
                                             <button
                                                 onClick={fetchActivities}
                                                 className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
-                                                title="Refresh Logs"
+                                                title={t('settings.activity.refresh', 'Refresh Logs')}
                                             >
                                                 <RefreshCw className={`w-5 h-5 ${loadingActivities ? 'animate-spin' : ''}`} />
                                             </button>
@@ -686,8 +688,8 @@ export default function Settings() {
                                                 <RefreshCw className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Auto-deletion Settings</h3>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Automatically clear your activity history</p>
+                                                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('settings.activity.auto_delete_title', 'Auto-deletion Settings')}</h3>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.activity.auto_delete_desc', 'Automatically clear your activity history')}</p>
                                             </div>
                                         </div>
                                         <div className="min-w-[200px]">
@@ -697,9 +699,9 @@ export default function Settings() {
                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
                                                     }`}
                                             >
-                                                <option value="7_days">After 7 days</option>
-                                                <option value="1_month">After 1 month</option>
-                                                <option value="manual">Until manually deleted</option>
+                                                <option value="7_days">{t('settings.activity.retention_7', 'After 7 days')}</option>
+                                                <option value="1_month">{t('settings.activity.retention_30', 'After 1 month')}</option>
+                                                <option value="manual">{t('settings.activity.retention_manual', 'Until manually deleted')}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -711,7 +713,7 @@ export default function Settings() {
                                         <Search className={`absolute left-3 top-2.5 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                                         <input
                                             type="text"
-                                            placeholder="Search by action..."
+                                            placeholder={t('settings.activity.search_placeholder', 'Search by action...')}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-white border-gray-300 text-gray-900'
@@ -725,9 +727,9 @@ export default function Settings() {
                                             className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
                                                 }`}
                                         >
-                                            <option value="all">All Activities</option>
-                                            <option value="system">System (Login/Logout)</option>
-                                            <option value="issues">Issues</option>
+                                            <option value="all">{t('settings.activity.filter_all', 'All Activities')}</option>
+                                            <option value="system">{t('settings.activity.filter_system', 'System (Login/Logout)')}</option>
+                                            <option value="issues">{t('settings.activity.filter_issues', 'Issues')}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -757,14 +759,14 @@ export default function Settings() {
                                                         <td colSpan="4" className="px-6 py-8 text-center">
                                                             <div className="flex justify-center items-center gap-2">
                                                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                                                                <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Loading logs...</span>
+                                                                <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{t('settings.activity.loading_logs', 'Loading logs...')}</span>
                                                             </div>
                                                         </td>
                                                     </tr>
                                                 ) : filteredActivities.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="4" className={`px-6 py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                            No activities found matching your filters.
+                                                            {t('settings.activity.no_activities', 'No activities found matching your filters.')}
                                                         </td>
                                                     </tr>
                                                 ) : (

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BASE_URL } from '../../../config';
 import { useTheme } from '../../Context/ThemeContext';
+import { io } from 'socket.io-client';
 
 export default function CitizenMessages() {
     const { isDark } = useTheme();
@@ -26,16 +27,49 @@ export default function CitizenMessages() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('All');
     const [selectedMessage, setSelectedMessage] = useState(null);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/auth/users/session`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.loggedIn) setUser(data.user);
+            } catch (err) {
+                console.error("Failed to fetch session", err);
+            }
+        };
+        fetchSession();
         fetchMessages();
 
         const interval = setInterval(() => {
             fetchMessages(true);
-        }, 30000); // Refresh every 30 seconds
+        }, 30000); // 30s background sync
 
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            const socket = io(BASE_URL, {
+                withCredentials: true,
+                auth: { userId: user._id || user.id }
+            });
+
+            socket.on('connect', () => {
+                socket.emit('join_user_room', user._id || user.id);
+            });
+
+            socket.on('new_notification', () => {
+                fetchMessages(true);
+            });
+
+            return () => {
+                socket.off('new_notification');
+                socket.disconnect();
+            };
+        }
+    }, [user]);
 
     const fetchMessages = async (isBackground = false) => {
         try {

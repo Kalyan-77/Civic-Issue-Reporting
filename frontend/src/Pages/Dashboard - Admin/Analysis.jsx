@@ -120,6 +120,7 @@ const AnalyticsPage = () => {
   const resolved = filteredIssues.filter(i => i.status === 'Resolved').length;
   const inProgress = filteredIssues.filter(i => i.status === 'In Progress').length;
   const pending = filteredIssues.filter(i => i.status === 'Pending').length;
+  const misrouted = filteredIssues.filter(i => i.isReassignedToSuper).length;
 
   // 2. Resolution Rate
   const resolutionRate = total > 0 ? ((resolved / total) * 100).toFixed(1) : 0;
@@ -188,6 +189,19 @@ const AnalyticsPage = () => {
       .slice(0, 5); // Top 5
   };
   const areaData = getTopAreas();
+ 
+  // 5.5 Misrouting Reasons
+  const getMisroutingReasons = () => {
+    const reasons = {};
+    filteredIssues.filter(i => i.isReassignedToSuper && i.reassignmentReason).forEach(issue => {
+      reasons[issue.reassignmentReason] = (reasons[issue.reassignmentReason] || 0) + 1;
+    });
+    return Object.entries(reasons)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  };
+  const misroutingReasons = getMisroutingReasons();
 
   // 6. Reporting Trends (Weekly/Monthly/Yearly)
   const [reportTimeframe, setReportTimeframe] = useState('monthly');
@@ -389,6 +403,13 @@ const AnalyticsPage = () => {
             icon={Activity}
             colorClass="bg-orange-500"
           />
+          <MetricCard
+            title="Misrouted Issues"
+            value={misrouted}
+            subValue="reported to Super Admin"
+            icon={AlertCircle}
+            colorClass="bg-red-600"
+          />
         </div>
 
         {/* Charts Section */}
@@ -409,7 +430,8 @@ const AnalyticsPage = () => {
                     data={[
                       { name: 'Pending', value: pending, color: '#EF4444' },
                       { name: 'In Progress', value: inProgress, color: '#F97316' },
-                      { name: 'Resolved', value: resolved, color: '#22C55E' }
+                      { name: 'Resolved', value: resolved, color: '#22C55E' },
+                      { name: 'Misrouted', value: misrouted, color: '#DC2626' }
                     ]}
                     cx="50%"
                     cy="50%"
@@ -421,7 +443,8 @@ const AnalyticsPage = () => {
                     {[
                       { name: 'Pending', value: pending, color: isDark ? '#F87171' : '#EF4444' },
                       { name: 'In Progress', value: inProgress, color: isDark ? '#FB923C' : '#F97316' },
-                      { name: 'Resolved', value: resolved, color: isDark ? '#4ADE80' : '#22C55E' }
+                      { name: 'Resolved', value: resolved, color: isDark ? '#4ADE80' : '#22C55E' },
+                      { name: 'Misrouted', value: misrouted, color: '#DC2626' }
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
@@ -691,42 +714,85 @@ const AnalyticsPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Current Distribution (Status) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+ 
+        {/* Misrouting Reasons */}
+        {misrouted > 0 && (
           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
-            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Pending Review</h3>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-red-500">{pending}</span>
-              <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
+            <div className="flex items-center gap-2 mb-6">
+              <div className={`p-2 rounded-lg ${isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-50 text-red-600'}`}>
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Misrouting Reasons</h3>
             </div>
-            <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
-              <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${(pending / total) * 100}%` }}></div>
+            <div className="space-y-4">
+              {misroutingReasons.length > 0 ? misroutingReasons.map((reason, idx) => (
+                <div key={idx}>
+                  <div className="flex justify-between text-sm mb-1.5">
+                    <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} line-clamp-1 truncate mr-2`}>
+                      {reason.name}
+                    </span>
+                    <span className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{reason.count}</span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div
+                      className="h-full rounded-full bg-red-500"
+                      style={{ width: `${(reason.count / misrouted) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )) : (
+                <p className="text-gray-400 text-center py-4">No specific reasons recorded</p>
+              )}
             </div>
           </div>
-
-          <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
-            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>In Progress</h3>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-orange-500">{inProgress}</span>
-              <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
-            </div>
-            <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
-              <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${(inProgress / total) * 100}%` }}></div>
-            </div>
-          </div>
-
-          <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
-            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Resolved</h3>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-green-500">{resolved}</span>
-              <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
-            </div>
-            <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
-              <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${(resolved / total) * 100}%` }}></div>
-            </div>
-          </div>
-        </div>
+        )}
+ 
+         {/* Current Distribution (Status) */}
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
+             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Pending Review</h3>
+             <div className="flex items-end gap-2">
+               <span className="text-4xl font-bold text-red-500">{pending}</span>
+               <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
+             </div>
+             <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
+               <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${total > 0 ? (pending / total) * 100 : 0}%` }}></div>
+             </div>
+           </div>
+ 
+           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
+             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>In Progress</h3>
+             <div className="flex items-end gap-2">
+               <span className="text-4xl font-bold text-orange-500">{inProgress}</span>
+               <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
+             </div>
+             <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
+               <div className="bg-orange-500 h-1.5 rounded-full" style={{ width: `${total > 0 ? (inProgress / total) * 100 : 0}%` }}></div>
+             </div>
+           </div>
+ 
+           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
+             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Resolved</h3>
+             <div className="flex items-end gap-2">
+               <span className="text-4xl font-bold text-green-500">{resolved}</span>
+               <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
+             </div>
+             <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
+               <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${total > 0 ? (resolved / total) * 100 : 0}%` }}></div>
+             </div>
+           </div>
+ 
+           <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-6 rounded-xl shadow-sm border`}>
+             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Misrouted</h3>
+             <div className="flex items-end gap-2">
+               <span className="text-4xl font-bold text-red-600">{misrouted}</span>
+               <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>cases</span>
+             </div>
+             <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded-full h-1.5 mt-4`}>
+               <div className="bg-red-600 h-1.5 rounded-full" style={{ width: `${total > 0 ? (misrouted / total) * 100 : 0}%` }}></div>
+             </div>
+           </div>
+         </div>
 
       </div>
     </div >

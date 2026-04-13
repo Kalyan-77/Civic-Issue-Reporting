@@ -7,6 +7,7 @@ const Issue = require('../Models/IssueModel');
 const Settings = require('../Models/SettingsModel');
 const { logActivity } = require('./ActivityController');
 const transporter = require('../Config/mailer');
+const mailFrom = process.env.MAIL_FROM || process.env.MAIL_MY || process.env.MAIL_USER;
 
 // ==================== OTP STORE (in-memory, 10-min TTL) ====================
 // Map keyed by email => { otp, expiresAt, data }
@@ -24,7 +25,7 @@ const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 /** Send the OTP verification email */
 const sendOtpEmail = async (email, name, otp) => {
     const mailOptions = {
-        from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
+        from: `"Civic Issue System" <${mailFrom}>`,
         to: email,
         subject: '🔐 Your Email Verification OTP — Civic Issue System',
         html: `
@@ -120,7 +121,7 @@ const generateSecurePassword = () => {
  */
 const sendDeptAdminWelcomeEmail = async ({ name, email, password, department }) => {
     const mailOptions = {
-        from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
+        from: `"Civic Issue System" <${mailFrom}>`,
         to: email,
         subject: '🎉 Welcome to Civic Issue System — Your Admin Account is Ready',
         html: `
@@ -640,7 +641,7 @@ exports.forgotPassword = async (req, res) => {
 
         // Send OTP email
         const mailOptions = {
-            from: `"Civic Issue System" <${process.env.MAIL_MY}>`,
+            from: `"Civic Issue System" <${mailFrom}>`,
             to: email.toLowerCase().trim(),
             subject: '🔑 Password Reset OTP — Civic Issue System',
             html: `

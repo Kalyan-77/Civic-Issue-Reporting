@@ -7,6 +7,7 @@ import {
     HelpCircle, AlertCircle, CheckCircle2, Clock,
     Building2, Shield, Loader2, Sparkles, Info
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Constants & Helpers ─────────────────────────────────────── */
 
@@ -43,19 +44,20 @@ function detectIntent(text) {
     if (hashMatch) return { type: 'track_issue', id: hashMatch[1] };
 
     // Issue status
-    if (/\b(my issues?|status|track|progress|pending|resolved|all issues?|list|how are|my report)\b/.test(t))
+    if (/\b(show|list|see|view|track|find|status|what is|how is) (my issues?|all issues?)\b/.test(t) ||
+        t === "my issues" || t === "my issue" || t === "status")
         return { type: 'my_issues' };
 
     // Super Admin contact
-    if (/\b(super admin|superadmin|main admin|chief|head|principal)\b/.test(t) && /\b(contact|phone|email|mobile|number|reach|call|address)\b/.test(t))
+    if (/\b(super admin|superadmin|main admin)\b/.test(t) && /\b(phone|email|mobile|number|call|details|info)\b/.test(t))
         return { type: 'contact_super' };
 
     // Dept admin contact
-    if (/\b(dept|department|department admin|admin contact|contact admin|who handles|who is responsible|garbage|streetlight|pothole|water|leakage|reach admin)\b/.test(t) && /\b(contact|phone|email|mobile|number|reach|call|address)\b/.test(t))
+    if (/\b(dept admin|department admin|admin contact|contact admin)\b/.test(t) && /\b(phone|email|mobile|number|call|details|info)\b/.test(t))
         return { type: 'contact_dept' };
 
-    // Any contact
-    if (/\b(contact|phone|email|mobile|call|reach|address|who.*admin|admin.*info|send message)\b/.test(t))
+    // General contact info request
+    if (/\b(phone|email|mobile|call|address|contact info|contact details)\b/.test(t) && /\b(admin|office|support|help)\b/.test(t))
         return { type: 'contact_all' };
 
     // FAQs
@@ -160,8 +162,8 @@ function IssueCard({ issue, isDark }) {
                 <span className={`text-xs px-2 py-0.5 rounded font-bold ${PRIORITY_STYLES[issue.priority?.toLowerCase()] || 'bg-gray-400 text-white'}`}>
                     {issue.priority} priority
                 </span>
-                {issue.isEscalated && (
-                    <span className="text-xs px-2 py-0.5 rounded font-bold bg-red-500 text-white">Escalated</span>
+                {issue.isReassignedToSuper && (
+                    <span className="text-xs px-2 py-0.5 rounded font-bold bg-amber-500 text-white">Misrouted</span>
                 )}
             </div>
             {issue.assignedTo && (
@@ -247,6 +249,7 @@ function FAQItem({ faq, isDark }) {
 
 /* ─── Main Chatbot Component ──────────────────────────────────── */
 export default function Chatbot() {
+    const { t } = useTranslation();
     const { isDark } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -430,7 +433,7 @@ export default function Chatbot() {
         setMessages(prev => [...prev, { id: Date.now(), role: 'user', text, ts: new Date() }]);
         setInputValue('');
 
-        // Tracking mode — expect issue ID input
+        // 1. Tracking mode — expect issue ID input
         if (trackingMode) {
             setTrackingMode(false);
             const idMatch = text.match(/[0-9a-f]{24}/i);
@@ -442,8 +445,58 @@ export default function Chatbot() {
             return;
         }
 
+        // 2. Rule-based Intent Matching (Fast path for specific data requests)
         const intent = detectIntent(text);
-        processIntent(intent);
+        if (intent.type !== 'unknown' && intent.type !== 'greeting' && intent.type !== 'thanks') {
+            console.log(`🤖 Chatbot: Handling via Fast Path (Static Rule: ${intent.type})`);
+            processIntent(intent);
+            return;
+        }
+
+        // 3. AI Fallback (Dynamic Conversation)
+        console.log(`🧠 Chatbot: Routing to Gemini AI...`);
+        askAI(text);
+    };
+
+    // Call Backend AI Endpoint
+    const askAI = async (message) => {
+        console.log(`📡 Backend Request: Sending to Gemini AI via Backend server...`);
+        setIsTyping(true);
+        try {
+            // Prepare chat history for AI context (last 5 messages)
+            const history = messages
+                .filter(m => m.role === 'user' || m.type === 'ai_response')
+                .slice(-5)
+                .map(m => ({
+                    role: m.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: m.text || m.payload?.text || '' }]
+                }));
+
+            const res = await fetch(`${BASE_URL}/chatbot/ai`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, history })
+            });
+
+            const data = await res.json();
+            setIsTyping(false);
+
+            if (data.success) {
+                setMessages(prev => [...prev, {
+                    id: Date.now(),
+                    role: 'bot',
+                    type: 'ai_response',
+                    payload: { text: data.response },
+                    ts: new Date()
+                }]);
+            } else {
+                addBotMessage('error');
+            }
+        } catch (error) {
+            console.error('AI Chat Error:', error);
+            setIsTyping(false);
+            addBotMessage('error');
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -469,12 +522,12 @@ export default function Chatbot() {
                 content = (
                     <div>
                         <p className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                            👋 Hi{payload.name ? `, ${payload.name.split(' ')[0]}` : ''}! I'm CivBot 🤖
+                            👋 {t('chatbot.hi', 'Hi')}{payload.name ? `, ${payload.name.split(' ')[0]}` : ''}! {t('chatbot.name_intro', "I'm CivBot")} 🤖
                         </p>
                         <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Your civic assistant — I can help you with issue tracking, admin contacts, and common questions.
+                            {t('chatbot.role_desc', "Your civic assistant — I can help you with issue tracking, admin contacts, and common questions.")}
                         </p>
-                        <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Quick Actions</p>
+                        <p className={`text-xs font-semibold mb-2 uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t('chatbot.quick_actions', 'Quick Actions')}</p>
                         <div className="flex flex-wrap gap-2">
                             {QUICK_ACTIONS.map(a => (
                                 <button key={a.id} onClick={() => handleQuickAction(a.id)}
@@ -719,6 +772,20 @@ export default function Chatbot() {
                                     {a.label}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+                );
+                break;
+
+            case 'ai_response':
+                content = (
+                    <div className="space-y-2">
+                        <div className={`text-sm leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-700'} whitespace-pre-wrap`}>
+                            {payload.text}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-2 opacity-50">
+                            <Sparkles className="w-3 h-3 text-blue-500" />
+                            <span className="text-[10px] font-medium uppercase tracking-wider">AI Generated</span>
                         </div>
                     </div>
                 );

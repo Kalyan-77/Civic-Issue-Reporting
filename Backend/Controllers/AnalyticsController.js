@@ -23,8 +23,8 @@ exports.getOverviewAnalytics = async (req, res) => {
     const pendingIssues = await Issue.countDocuments({ ...filter, status: 'Pending' });
     const inProgressIssues = await Issue.countDocuments({ ...filter, status: 'In Progress' });
     const resolvedIssues = await Issue.countDocuments({ ...filter, status: 'Resolved' });
-    const criticalIssues = await Issue.countDocuments({ ...filter, priority: 'high' });
-    const escalatedIssues = await Issue.countDocuments({ ...filter, isEscalated: true });
+    const criticalIssues = await Issue.countDocuments({ ...filter, priority: 'high', status: { $ne: 'Resolved' } });
+    const misroutedIssues = await Issue.countDocuments({ ...filter, isReassignedToSuper: true });
 
     res.status(200).json({
       success: true,
@@ -34,7 +34,7 @@ exports.getOverviewAnalytics = async (req, res) => {
         inProgressIssues,
         resolvedIssues,
         criticalIssues,
-        escalatedIssues
+        misroutedIssues
       }
     });
 
@@ -85,8 +85,14 @@ exports.getIssuesByStatusAnalytics = async (req, res) => {
   try {
     const filter = getDateFilter(req);
 
+    // Standard status counts EXCLUDING misrouted issues (to avoid double counting)
     const analytics = await Issue.aggregate([
-      { $match: filter },
+      { 
+        $match: { 
+          ...filter, 
+          isReassignedToSuper: { $ne: true } 
+        } 
+      },
       {
         $group: {
           _id: "$status",
@@ -94,6 +100,12 @@ exports.getIssuesByStatusAnalytics = async (req, res) => {
         }
       }
     ]);
+
+    // Explicitly add misrouted count
+    const misroutedCount = await Issue.countDocuments({ ...filter, isReassignedToSuper: true });
+    if (misroutedCount > 0) {
+      analytics.push({ _id: "Misrouted", count: misroutedCount });
+    }
 
     res.status(200).json({
       success: true,
@@ -238,15 +250,14 @@ exports.getAdminPerformanceAnalytics = async (req, res) => {
 };
 
 /**
- * 🔹 6. ESCALATION ANALYTICS
+ * 🔹 6. MISROUTED ISSUES ANALYTICS
  */
-exports.getEscalationAnalytics = async (req, res) => {
+exports.getMisroutedAnalytics = async (req, res) => {
   try {
-    // For escalations, we show ALL currently escalated issues regardless of date
-    // to ensure critical issues are not hidden by date filters.
-    const matchStage = { isEscalated: true };
+    // misrouted issues are those explicitly flagged and needing super admin attention.
+    const matchStage = { isReassignedToSuper: true };
 
-    const totalEscalated = await Issue.countDocuments(matchStage);
+    const totalMisrouted = await Issue.countDocuments(matchStage);
 
     const byCategory = await Issue.aggregate([
       { $match: matchStage },
@@ -255,7 +266,7 @@ exports.getEscalationAnalytics = async (req, res) => {
 
     const byReason = await Issue.aggregate([
       { $match: matchStage },
-      { $group: { _id: "$escalationReason", count: { $sum: 1 } } },
+      { $group: { _id: "$reassignmentReason", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 3 }
     ]);
@@ -263,7 +274,7 @@ exports.getEscalationAnalytics = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        totalEscalated,
+        totalMisrouted,
         byCategory,
         byReason
       }
@@ -272,7 +283,7 @@ exports.getEscalationAnalytics = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to fetch escalation analytics",
+      message: "Failed to fetch misrouted issues analytics",
       error: error.message
     });
   }

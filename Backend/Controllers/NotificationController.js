@@ -2,20 +2,25 @@ const Notification = require('../Models/NotificationModel');
 const io = require('../Config/socket');
 
 // Create a notification (Internal function, can be exported if needed)
-exports.createNotification = async (recipient, sender, type, issueId, message) => {
+exports.createNotification = async (recipient, sender, type, issueId, message, contactId = null) => {
     try {
-        const notification = new Notification({
+        const notificationData = {
             recipient,
-            sender,
             type,
-            issueId,
             message
-        });
+        };
+
+        if (sender) notificationData.sender = sender;
+        if (issueId) notificationData.issueId = issueId;
+        if (contactId) notificationData.contactId = contactId;
+
+        const notification = new Notification(notificationData);
         await notification.save();
         
         // Emit socket notification to the recipient's room
         try {
-            io.getIo().to(recipient.toString()).emit('new_notification', notification);
+            const ioInstance = io.getIo();
+            ioInstance.to(recipient.toString()).emit('new_notification', notification);
         } catch (socketError) {
             console.error('Socket.io error emitting notification:', socketError);
         }
