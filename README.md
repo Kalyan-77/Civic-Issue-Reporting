@@ -15,9 +15,9 @@ A full-stack platform that bridges the gap between citizens and local authoritie
 | **Real-time** | Socket.IO |
 | **Auth** | express-session + connect-mongo |
 | **Storage** | Cloudinary |
-| **Email** | Nodemailer + Resend |
-| **AI Chatbot** | Claude API (Anthropic) |
-| **Maps** | Mapbox |
+| **Email** | Nodemailer |
+| **AI Chatbot** | Gemini API |
+| **Maps** | Leaflet Map |
 
 ---
 
@@ -93,7 +93,7 @@ Capstone - Project/
 - Node.js v18+
 - MongoDB (local or Atlas)
 - Cloudinary account
-- Resend API key
+- Gemini API
 
 ### Installation
 ```bash
@@ -112,8 +112,3 @@ npm install
 npm run dev
 ```
 
----
-
-## 📄 License
-
-MIT
