@@ -73,7 +73,7 @@ export default function UserIssueDetails() {
                     title: data.title || '',
                     description: data.description || '',
                     category: data.category || 'Other',
-                    priority: data.priority || 'Medium',
+                    priority: data.priority || 'medium',
                     area: data.location?.area || '',
                     address: data.location?.address || '',
                     latitude: data.location?.latitude || '',
@@ -89,8 +89,13 @@ export default function UserIssueDetails() {
         }
     };
 
-    const handleEditChange = (e) => {
-        setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+    const handleEditChange = (event) => {
+        const { name, value } = event.target;
+
+        setEditFormData((previous) => ({
+            ...previous,
+            [name]: name === 'priority' ? value.toLowerCase() : value
+        }));
     };
 
     const submitEdit = async () => {
@@ -100,7 +105,7 @@ export default function UserIssueDetails() {
                 title: editFormData.title,
                 description: editFormData.description,
                 category: editFormData.category,
-                priority: editFormData.priority,
+                priority: editFormData.priority.toLowerCase(),
                 location: {
                     area: editFormData.area,
                     address: editFormData.address,
@@ -274,9 +279,9 @@ export default function UserIssueDetails() {
                                 className={`w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
                                     }`}
                             >
-                                <option value="High">{t('dashboard.filter.high', 'High')}</option>
-                                <option value="Medium">{t('dashboard.filter.medium', 'Medium')}</option>
-                                <option value="Low">{t('dashboard.filter.low', 'Low')}</option>
+                                <option value="high">{t('dashboard.filter.high', 'High')}</option>
+                                <option value="medium">{t('dashboard.filter.medium', 'Medium')}</option>
+                                <option value="low">{t('dashboard.filter.low', 'Low')}</option>
                             </select>
                         </div>
                     </div>

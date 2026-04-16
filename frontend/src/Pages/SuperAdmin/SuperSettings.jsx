@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../Context/ThemeContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Moon,
   Sun,
@@ -26,6 +26,7 @@ import { BASE_URL } from '../../../config';
 
 export default function SuperSettings() {
   const { theme, toggleTheme, isDark } = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('general');
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
@@ -665,8 +666,11 @@ export default function SuperSettings() {
                         <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Password</h4>
                         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Last changed 30 days ago</p>
                       </div>
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                        Change Password
+                      <button
+                        onClick={() => navigate('/superadmin/profile')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Go to Profile
                       </button>
                     </div>
                   </div>
