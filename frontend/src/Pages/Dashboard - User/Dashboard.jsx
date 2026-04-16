@@ -188,7 +188,7 @@ export default function Dashboard() {
             title: issue.title || '',
             description: issue.description || '',
             category: issue.category || 'Other',
-            priority: issue.priority || 'Medium',
+            priority: issue.priority || 'medium',
             area: issue.location?.area || '',
             address: issue.location?.address || '',
             latitude: issue.location?.latitude || '',
@@ -725,9 +725,9 @@ export default function Dashboard() {
                                                 className={`w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-slate-200 text-slate-900'
                                                     }`}
                                             >
-                                                <option value="High">High</option>
-                                                <option value="Medium">Medium</option>
-                                                <option value="Low">Low</option>
+                                                <option value="high">High</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="low">Low</option>
                                             </select>
                                         </div>
                                     </div>

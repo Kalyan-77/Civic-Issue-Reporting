@@ -203,7 +203,7 @@ exports.getAdminPerformanceAnalytics = async (req, res) => {
     const filter = getDateFilter(req);
 
     // Merge status filter with date filter
-    const matchStage = { ...filter, status: "Resolved", assignedTo: { $ne: null } };
+    const matchStage = { ...filter, status: "Resolved", resolvedAt: { $ne: null }, assignedTo: { $ne: null } };
 
     const analytics = await Issue.aggregate([
       { $match: matchStage },
@@ -224,7 +224,7 @@ exports.getAdminPerformanceAnalytics = async (req, res) => {
           profilePicture: { $first: "$admin.profilePicture" },
           resolvedCount: { $sum: 1 },
           avgResolutionTime: {
-            $avg: { $subtract: ["$updatedAt", "$createdAt"] }
+            $avg: { $subtract: ["$resolvedAt", "$createdAt"] }
           }
         }
       },
@@ -295,14 +295,14 @@ exports.getMisroutedAnalytics = async (req, res) => {
 exports.getCategoryResolutionAnalytics = async (req, res) => {
   try {
     const filter = getDateFilter(req);
-    const matchStage = { ...filter, status: 'Resolved' };
+    const matchStage = { ...filter, status: 'Resolved', resolvedAt: { $ne: null } };
 
     const analytics = await Issue.aggregate([
       { $match: matchStage },
       {
         $group: {
           _id: "$category",
-          avgResolutionTime: { $avg: { $subtract: ["$updatedAt", "$createdAt"] } }
+          avgResolutionTime: { $avg: { $subtract: ["$resolvedAt", "$createdAt"] } }
         }
       },
       {
@@ -409,7 +409,8 @@ exports.getIssueTrendsAnalytics = async (req, res) => {
       {
         $match: {
           ...matchStage,
-          status: 'Resolved'
+          status: 'Resolved',
+          resolvedAt: { $ne: null }
         }
       },
       { $project: { date: "$createdAt" } },
@@ -524,32 +525,42 @@ exports.getIssuesByAreaAnalytics = async (req, res) => {
  */
 exports.getHeroStats = async (req, res) => {
   try {
-    const resolvedIssues = await Issue.countDocuments({ status: 'Resolved' });
-    const activeCitizens = await Users.countDocuments({ role: 'citizen' });
+    const filter = getDateFilter(req);
 
-    // Calculate average response time for resolved issues
-    const resolutionStats = await Issue.aggregate([
-      { $match: { status: 'Resolved' } },
-      {
-        $group: {
-          _id: null,
-          avgTime: { $avg: { $subtract: ["$updatedAt", "$createdAt"] } }
+    const [totalIssuesReported, activeCitizenCount, resolutionStats] = await Promise.all([
+      Issue.countDocuments(filter),
+      Users.countDocuments({
+        role: 'citizen',
+        isBlocked: { $ne: true }
+      }),
+      Issue.aggregate([
+        {
+          $match: {
+            ...filter,
+            resolvedAt: { $ne: null }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            avgTime: { $avg: { $subtract: ['$resolvedAt', '$createdAt'] } }
+          }
         }
-      }
+      ])
     ]);
 
     let avgResponseHours = '48h'; // Default fallback
     if (resolutionStats.length > 0 && resolutionStats[0].avgTime) {
       const avgMs = resolutionStats[0].avgTime;
-      const hours = Math.round(avgMs / (1000 * 60 * 60));
+      const hours = Math.max(1, Math.round(avgMs / (1000 * 60 * 60)));
       avgResponseHours = `${hours}h`;
     }
 
     res.status(200).json({
       success: true,
       data: {
-        resolvedIssues,
-        activeCitizens,
+        totalIssuesReported,
+        activeCitizens: activeCitizenCount,
         avgResponse: avgResponseHours
       }
     });

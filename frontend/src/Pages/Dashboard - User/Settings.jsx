@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BASE_URL } from '../../../config';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../Context/ThemeContext';
 import {
     Moon,
@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 export default function Settings() {
     const { t, i18n } = useTranslation();
     const { theme, toggleTheme, isDark } = useTheme();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'general');
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
@@ -638,10 +639,10 @@ export default function Settings() {
                                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('settings.security.password_desc', 'Reset your password')}</p>
                                             </div>
                                             <button
-                                                onClick={() => window.location.href = '/citizen/profile'}
+                                                onClick={() => navigate('/citizen/profile')}
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                             >
-                                                {t('settings.security.change_pw', 'Change Password')}
+                                                {t('settings.security.go_profile', 'Go to Profile')}
                                             </button>
                                         </div>
                                     </div>

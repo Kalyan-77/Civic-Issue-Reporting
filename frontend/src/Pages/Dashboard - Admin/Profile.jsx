@@ -108,8 +108,8 @@ export default function AdminProfile() {
                     // Fallback or use existing data
                     role: data.user.role === 'dept_admin' ? 'Department Admin' : data.user.role,
                     department: data.user.department || 'General',
-                    // Stats come from backend now or mocked
-                    stats: data.user.stats || {
+                    // Stats are loaded separately from the admin issue queue
+                    stats: {
                         issuesAssigned: 0,
                         issuesResolved: 0,
                         pendingIssues: 0
@@ -118,6 +118,7 @@ export default function AdminProfile() {
                     activities: []
                 });
 
+                fetchAdminStats(data.user._id || data.user.id);
                 // Fetch activities
                 fetchActivities();
             }
@@ -125,6 +126,38 @@ export default function AdminProfile() {
             console.error('Error fetching profile:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAdminStats = async (adminId) => {
+        try {
+            if (!adminId) return;
+
+            const response = await fetch(`${BASE_URL}/issue/admin/${adminId}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch admin stats (${response.status})`);
+            }
+
+            const data = await response.json();
+            const issues = data.issues || [];
+
+            const issuesAssigned = issues.length;
+            const issuesResolved = issues.filter(issue => issue.status === 'Resolved').length;
+            const pendingIssues = issues.filter(issue => issue.status === 'Pending' || issue.status === 'In Progress').length;
+
+            setUser(prev => prev ? ({
+                ...prev,
+                stats: {
+                    issuesAssigned,
+                    issuesResolved,
+                    pendingIssues
+                }
+            }) : prev);
+        } catch (error) {
+            console.error('Error fetching admin stats:', error);
         }
     };
 

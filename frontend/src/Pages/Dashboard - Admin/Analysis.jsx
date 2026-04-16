@@ -31,7 +31,7 @@ const AnalyticsPage = () => {
           // Set department name for display
           setDepartment(user.department || 'Department');
 
-          // Fetch all issues and filter by department if user is dept_admin
+          // Fetch the same admin-scoped issue list used by the dashboard
           fetchAllIssues(user);
         } else {
           console.warn('User not logged in, showing sample data');
@@ -49,26 +49,28 @@ const AnalyticsPage = () => {
   }, []);
 
   const normalizeStr = (str) => str?.toLowerCase().replace(/s$/, '').trim();
-
   const fetchAllIssues = async (user) => {
     try {
       setLoading(true);
-      const response = await fetch(`${BASE_URL}/issue/all`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      let relevantIssues = [];
 
-      let relevantIssues = data || [];
-
-      // Filter by department for Dept Admins
-      if (user.role === 'dept_admin' && user.department) {
-        const deptNormalized = normalizeStr(user.department);
-        relevantIssues = relevantIssues.filter(issue => {
-          const catNormalized = normalizeStr(issue.category);
-          // Specific handle for known variations if needed, generally includes check works
-          if (deptNormalized === 'streetlight') return catNormalized === 'streetlight';
-          return catNormalized.includes(deptNormalized) || deptNormalized.includes(catNormalized);
+      if (user.role === 'dept_admin') {
+        const response = await fetch(`${BASE_URL}/issue/admin/${user._id || user.id}`, {
+          credentials: 'include'
         });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch admin issues (${response.status})`);
+        }
+
+        const data = await response.json();
+        relevantIssues = data.issues || [];
+      } else {
+        const response = await fetch(`${BASE_URL}/issue/all`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        relevantIssues = data?.issues || data || [];
       }
 
       setIssues(relevantIssues);

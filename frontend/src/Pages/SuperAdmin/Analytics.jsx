@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area, ComposedChart, Line
 } from 'recharts';
 import {
-  FileText, Clock, Settings, CheckCircle, AlertTriangle, Download, Calendar, MoreHorizontal
+  FileText, Clock, Settings, CheckCircle, AlertTriangle, Download, Calendar, MoreHorizontal, Users, Shield
 } from 'lucide-react';
 
 import { BASE_URL } from '../../../config';
@@ -27,6 +27,11 @@ const Analytics = () => {
   const [areaData, setAreaData] = useState([]);
   const [timeData, setTimeData] = useState([]);
   const [adminPerf, setAdminPerf] = useState([]);
+  const [userStats, setUserStats] = useState({
+    totalUsers: 0,
+    deptAdmins: 0,
+    superAdmins: 0
+  });
 
   // Mock data for unimplemented endpoints
   const [avgResolutionByCat, setAvgResolutionByCat] = useState([
@@ -78,15 +83,22 @@ const Analytics = () => {
         };
 
         // Parallel fetching
-        const [overviewRes, catRes, statusRes, timeRes, adminRes, escRes, catResTimeRes, areaRes] = await Promise.all([
-          axios.get(`${BASE_URL}/analytics/overview`, config),
+        const [overviewRes, catRes, statusRes, timeRes, adminRes, escRes, catResTimeRes, areaRes, userRes] = await Promise.all([
+          axios.get(`${BASE_URL}/analytics/overview`, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          }),
           axios.get(`${BASE_URL}/analytics/issues-by-category`, config),
           axios.get(`${BASE_URL}/analytics/issues-by-status`, config),
           axios.get(`${BASE_URL}/analytics/issues-over-time`, config),
           axios.get(`${BASE_URL}/analytics/admin-performance`, config),
           axios.get(`${BASE_URL}/analytics/misrouted`, config),
           axios.get(`${BASE_URL}/analytics/category-resolution`, config),
-          axios.get(`${BASE_URL}/analytics/issues-by-area`, config)
+          axios.get(`${BASE_URL}/analytics/issues-by-area`, config),
+          axios.get(`${BASE_URL}/analytics/users`, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          })
         ]);
 
         if (overviewRes.data.success) setOverview(overviewRes.data.data);
@@ -102,6 +114,10 @@ const Analytics = () => {
 
         if (areaRes.data.success) {
           setAreaData(areaRes.data.analytics.map(i => ({ name: i.area, value: i.count })));
+        }
+
+        if (userRes.data.success) {
+          setUserStats(userRes.data.data);
         }
 
         if (timeRes.data.success) {
@@ -144,6 +160,35 @@ const Analytics = () => {
     'Resolved': '#22C55E',     // Green
     'Misrouted': '#EC4899',    // Pink
   };
+
+  const userDistributionData = [
+    { name: 'Citizen Users', value: userStats.totalUsers, color: '#06B6D4' },
+    { name: 'Dept Admins', value: userStats.deptAdmins, color: '#9333EA' },
+    { name: 'Super Admins', value: userStats.superAdmins, color: '#64748B' }
+  ];
+
+  const deptAdminCategoryData = Object.values(
+    adminPerf.reduce((acc, admin) => {
+      const category = admin.category || 'Uncategorized';
+
+      if (!acc[category]) {
+        acc[category] = {
+          name: category,
+          adminCount: 0,
+          resolvedCount: 0,
+          color: '#3B82F6'
+        };
+      }
+
+      acc[category].adminCount += 1;
+      acc[category].resolvedCount += Number(admin.resolvedCount || 0);
+
+      return acc;
+    }, {})
+  ).map((entry, index) => ({
+    ...entry,
+    color: ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EC4899', '#14B8A6'][index % 6]
+  }));
 
   if (loading) return <div className={`flex justify-center items-center h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Loading Analytics...</div>;
 
@@ -190,6 +235,117 @@ const Analytics = () => {
         <StatCard icon={<CheckCircle size={24} />} label="Resolved" value={overview.resolvedIssues} color="bg-green-600" />
         <StatCard icon={<AlertTriangle size={24} />} label="Critical" value={overview.criticalIssues} color="bg-red-500" />
         <StatCard icon={<AlertTriangle size={24} />} label="Misrouted" value={overview.misroutedIssues} color="bg-amber-600" />
+      </div>
+
+      {/* User Analytics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <StatCard icon={<Users size={24} />} label="Citizen Users" value={userStats.totalUsers} color="bg-cyan-600" />
+        <StatCard icon={<Shield size={24} />} label="Dept Admins" value={userStats.deptAdmins} color="bg-purple-600" />
+        <StatCard icon={<Users size={24} />} label="Super Admins" value={userStats.superAdmins} color="bg-slate-600" />
+      </div>
+
+      {/* User Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-xl shadow-sm border transition-colors duration-200`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Users vs Dept Admins</h3>
+            <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={userDistributionData} barSize={42} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#374151' : '#E5E7EB'} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                <Tooltip cursor={{ fill: 'transparent' }} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {userDistributionData.map((entry, index) => (
+                    <Cell key={`user-bar-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-xl shadow-sm border transition-colors duration-200`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>User Role Distribution</h3>
+            <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={userDistributionData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={105}
+                  paddingAngle={6}
+                  dataKey="value"
+                >
+                  {userDistributionData.map((entry, index) => (
+                    <Cell key={`user-pie-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Department Admins by Category */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-xl shadow-sm border transition-colors duration-200`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Dept Admins by Category</h3>
+            <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={deptAdminCategoryData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#374151' : '#E5E7EB'} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip cursor={{ fill: 'transparent' }} />
+                <Legend />
+                <Bar dataKey="adminCount" name="Dept Admins" fill="#8B5CF6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="resolvedCount" name="Resolved Issues" fill="#10B981" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-xl shadow-sm border transition-colors duration-200`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Category Share of Dept Admins</h3>
+            <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={deptAdminCategoryData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={105}
+                  paddingAngle={4}
+                  dataKey="adminCount"
+                >
+                  {deptAdminCategoryData.map((entry, index) => (
+                    <Cell key={`dept-category-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {/* Issue Trends Chart (New) */}

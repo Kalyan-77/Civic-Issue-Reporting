@@ -10,9 +10,9 @@ export default function Body() {
   const [loading, setLoading] = useState(true);
   const [showFabTooltip, setShowFabTooltip] = useState(false);
   const [heroStats, setHeroStats] = useState({
-    resolvedIssues: '2,847',
-    activeCitizens: '15,239',
-    avgResponse: '48h'
+    totalIssuesReported: '0',
+    activeCitizens: '0',
+    avgResponse: '0h'
   });
 
   // Check session on component mount
@@ -27,7 +27,7 @@ export default function Body() {
       const resData = await response.json();
       if (resData.success) {
         setHeroStats({
-          resolvedIssues: resData.data.resolvedIssues.toLocaleString(),
+          totalIssuesReported: resData.data.totalIssuesReported.toLocaleString(),
           activeCitizens: resData.data.activeCitizens.toLocaleString(),
           avgResponse: resData.data.avgResponse
         });
@@ -100,7 +100,7 @@ export default function Body() {
   };
 
   const stats = [
-    { value: heroStats.resolvedIssues, label: t('home.resolved_issues', 'Issues Resolved') },
+    { value: heroStats.totalIssuesReported, label: t('home.total_issues_reported', 'Total Issues Reported') },
     { value: heroStats.activeCitizens, label: t('home.active_citizens', 'Active Citizens') },
     { value: heroStats.avgResponse, label: t('home.avg_response', 'Avg Response') }
   ];

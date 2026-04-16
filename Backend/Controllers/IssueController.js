@@ -657,23 +657,25 @@ exports.editIssue = async (req, res) => {
     issue.title = title;
     issue.description = description;
     issue.category = category;
-    if (priority) issue.priority = priority;
+    if (priority) {
+      issue.priority = priority.toString().toLowerCase();
+    }
 
     // Update location if provided
     if (location) {
-      if (location.address) {
+      if (location.address !== undefined) {
         issue.location.address = location.address;
       }
-      if (location.latitude) {
+      if (location.latitude !== undefined && location.latitude !== '') {
         issue.location.latitude = parseFloat(location.latitude);
       }
-      if (location.longitude) {
+      if (location.longitude !== undefined && location.longitude !== '') {
         issue.location.longitude = parseFloat(location.longitude);
       }
-      if (location.area) {
+      if (location.area !== undefined) {
         issue.location.area = location.area;
       }
-      if (location.state) {
+      if (location.state !== undefined) {
         issue.location.state = location.state;
       }
     }

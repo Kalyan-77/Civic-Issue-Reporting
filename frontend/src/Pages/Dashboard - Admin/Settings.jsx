@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../Context/ThemeContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     Moon,
     Sun,
@@ -24,6 +24,7 @@ import { BASE_URL } from '../../../config';
 
 export default function AdminSettings() {
     const { theme, toggleTheme, isDark } = useTheme();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('general');
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
@@ -32,7 +33,6 @@ export default function AdminSettings() {
         pushNotifications: false,
         weeklyReports: true,
         language: 'en',
-        autoArchive: '30',
         activityLogRetention: 'manual'
     });
 
@@ -373,25 +373,6 @@ export default function AdminSettings() {
                                         </select>
                                     </div>
 
-                                    {/* Auto Archive */}
-                                    <div>
-                                        <label className={`block text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                                            Auto-Archive Resolved Issues (Local Preference)
-                                        </label>
-                                        <select
-                                            value={settings.autoArchive}
-                                            onChange={(e) => setSettings({ ...settings, autoArchive: e.target.value })}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${isDark
-                                                ? 'bg-gray-700 border-gray-600 text-white'
-                                                : 'bg-white border-gray-300 text-gray-900'
-                                                }`}
-                                        >
-                                            <option value="30">After 30 days</option>
-                                            <option value="60">After 60 days</option>
-                                            <option value="90">After 90 days</option>
-                                            <option value="never">Never</option>
-                                        </select>
-                                    </div>
                                 </div>
                             </div>
                         )}
@@ -443,20 +424,6 @@ export default function AdminSettings() {
                                     </div>
                                 </div>
 
-                                {/* Preview */}
-                                <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-6 transition-colors duration-200`}>
-                                    <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Preview</h3>
-                                    <div className="space-y-3">
-                                        <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-200`}>
-                                            <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sample Card</h4>
-                                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>This is how your dashboard elements will appear</p>
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Primary Button</button>
-                                            <button className={`px-4 py-2 rounded-lg transition-colors ${isDark ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>Secondary Button</button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         )}
 
@@ -594,15 +561,16 @@ export default function AdminSettings() {
 
                                                                         {notification.issueId && (
                                                                             <div className="mt-3">
-                                                                                <Link
-                                                                                    to={`/admin/issue/${typeof notification.issueId === 'object' ? notification.issueId._id : notification.issueId}`}
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => navigate(`/admin/issues/${typeof notification.issueId === 'object' ? notification.issueId._id : notification.issueId}`)}
                                                                                     className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline"
                                                                                 >
                                                                                     View related issue
                                                                                     <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                                                     </svg>
-                                                                                </Link>
+                                                                                </button>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -662,27 +630,15 @@ export default function AdminSettings() {
                                                 <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Password</h4>
                                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Change your password regularly</p>
                                             </div>
-                                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                                                Change Password
+                                            <button
+                                                onClick={() => navigate('/admin/profile')}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                            >
+                                                Go to Profile
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className={`${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4 transition-colors duration-200`}>
-                                        <div className="flex items-center space-x-3">
-                                            <Shield className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                            <div className="flex-1">
-                                                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Two-Factor Authentication</h4>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Add an extra layer of security</p>
-                                            </div>
-                                            <button className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${isDark
-                                                ? 'bg-gray-600 text-white hover:bg-gray-500'
-                                                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                                                }`}>
-                                                Enable
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         )}
