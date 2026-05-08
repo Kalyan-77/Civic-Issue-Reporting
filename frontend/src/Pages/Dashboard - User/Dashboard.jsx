@@ -16,6 +16,8 @@ import {
     Filter,
     X,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Save,
     Loader2
 } from 'lucide-react';
@@ -33,6 +35,8 @@ export default function Dashboard() {
     const [issues, setIssues] = useState([]);
     const [filteredIssues, setFilteredIssues] = useState([]);
     const [selectedIssues, setSelectedIssues] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(6);
 
     // Notification State
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -158,6 +162,7 @@ export default function Dashboard() {
         });
 
         setFilteredIssues(result);
+        setCurrentPage(1);
     };
 
     const handleFilterChange = (key, value) => {
@@ -327,6 +332,11 @@ export default function Dashboard() {
         }`;
 
     const labelStyles = `block text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-gray-400' : 'text-slate-500'}`;
+
+    const totalPages = Math.ceil(filteredIssues.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const paginatedIssues = filteredIssues.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50/50'} pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 relative`}>
@@ -522,7 +532,7 @@ export default function Dashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {filteredIssues.map((issue) => (
+                            {paginatedIssues.map((issue) => (
                                 <div
                                     key={issue._id}
                                     className={`group relative rounded-3xl overflow-hidden border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'
@@ -647,6 +657,41 @@ export default function Dashboard() {
                                 </div>
                             ))}
                         </div>
+
+                        {totalPages > 1 && (
+                            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredIssues.length)} of {filteredIssues.length}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className={`flex items-center gap-1 px-4 py-2 rounded-xl border transition-colors ${currentPage === 1
+                                            ? `${isDark ? 'bg-gray-800 text-gray-600 border-gray-700' : 'bg-gray-100 text-gray-400 border-gray-200'} cursor-not-allowed`
+                                            : `${isDark ? 'bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`
+                                            }`}
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                        Previous
+                                    </button>
+                                    <span className={`px-3 py-2 text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>
+                                        {currentPage} / {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                        className={`flex items-center gap-1 px-4 py-2 rounded-xl border transition-colors ${currentPage === totalPages
+                                            ? `${isDark ? 'bg-gray-800 text-gray-600 border-gray-700' : 'bg-gray-100 text-gray-400 border-gray-200'} cursor-not-allowed`
+                                            : `${isDark ? 'bg-gray-800 text-gray-200 border-gray-700 hover:bg-gray-700' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`
+                                            }`}
+                                    >
+                                        Next
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className={`text-center py-20 rounded-3xl border border-dashed ${isDark ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-slate-200'

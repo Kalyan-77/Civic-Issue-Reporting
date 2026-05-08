@@ -5,7 +5,8 @@ import {
     X, Send, User, Phone, Mail,
     MapPin, RefreshCw, ChevronDown,
     HelpCircle, AlertCircle, CheckCircle2, Clock,
-    Building2, Shield, Loader2, Sparkles, Info
+    Building2, Shield, Loader2, Sparkles, Info,
+    Maximize2, Minimize2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -252,6 +253,7 @@ export default function Chatbot() {
     const { t } = useTranslation();
     const { isDark } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -834,13 +836,28 @@ export default function Chatbot() {
 
                 {/* Chat Window */}
                 {isOpen && (
+                    <>
+                    {/* Backdrop overlay in expanded mode */}
+                    {isExpanded && (
+                        <div
+                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
+                            onClick={() => setIsExpanded(false)}
+                        />
+                    )}
                     <div
                         id="chatbot-window"
-                        className={`w-[320px] max-w-[calc(100vw-48px)] rounded-3xl shadow-2xl overflow-hidden flex flex-col border transition-all animate-in slide-in-from-bottom-4 zoom-in-95 duration-300 ${isDark
-                            ? 'bg-gray-900 border-gray-700 shadow-black/50'
-                            : 'bg-white border-gray-200 shadow-gray-200/80'
+                        className={`
+                            flex flex-col border shadow-2xl overflow-hidden
+                            transition-all duration-300 animate-in slide-in-from-bottom-4 zoom-in-95
+                            ${isExpanded
+                                ? 'fixed inset-4 sm:inset-8 rounded-3xl z-[9999] w-auto max-w-none'
+                                : 'w-[320px] max-w-[calc(100vw-48px)] rounded-3xl'
+                            }
+                            ${isDark
+                                ? 'bg-gray-900 border-gray-700 shadow-black/50'
+                                : 'bg-white border-gray-200 shadow-gray-200/80'
                             }`}
-                        style={{ height: '600px', maxHeight: 'calc(100vh - 80px)' }}
+                        style={isExpanded ? {} : { height: '600px', maxHeight: 'calc(100vh - 80px)' }}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 flex-shrink-0">
@@ -864,7 +881,7 @@ export default function Chatbot() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => {
                                         setMessages([]);
@@ -878,8 +895,19 @@ export default function Chatbot() {
                                     <RefreshCw className="w-4 h-4" />
                                 </button>
                                 <button
+                                    id="chatbot-expand-btn"
+                                    onClick={() => setIsExpanded(prev => !prev)}
+                                    title={isExpanded ? 'Shrink to normal' : 'Expand to full screen'}
+                                    className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/20 transition-all"
+                                >
+                                    {isExpanded
+                                        ? <Minimize2 className="w-4 h-4" />
+                                        : <Maximize2 className="w-4 h-4" />
+                                    }
+                                </button>
+                                <button
                                     id="chatbot-close-btn"
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={() => { setIsOpen(false); setIsExpanded(false); }}
                                     className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/20 transition-all"
                                 >
                                     <X className="w-5 h-5" />
@@ -977,6 +1005,7 @@ export default function Chatbot() {
                             </p>
                         </div>
                     </div>
+                    </>
                 )}
             </div>
 
